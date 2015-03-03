@@ -15,6 +15,10 @@ class BaseField(abc.ABC):
 
   Arguments:
 
+    default (any) -- A default value to provide if the input is ever
+        None.  If not provided, and nullable is False, a field will
+        not accept None as an argument.
+
     nullable (bool) -- True if this field can be None/null, False
         otherwise.  Defaults to True.
 
@@ -25,8 +29,10 @@ class BaseField(abc.ABC):
   """
 
   def __init__(self, **kwargs):
-    self.nullable = kwargs.pop('nullable', True)
     self.coerce_func = kwargs.pop('coerce', lambda x: x) # pass-through by default
+    self.default = kwargs.pop('default', None)
+    self.nullable = kwargs.pop('nullable', True)
+    self._check_none = self.nullable or (self.default is not None)
 
     if len(kwargs) > 0:
       raise TypeError("Too many paramaters passed to field")
@@ -84,7 +90,7 @@ class BaseField(abc.ABC):
 
     Returns (bool) -- Whether val is of type typ.
     """
-    if self.nullable or val is not None:
+    if self._check_none or val is not None:
       return isinstance(val, typ) or isinstance(val, type(None))
     else:
       return isinstance(val, typ)
