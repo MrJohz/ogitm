@@ -8,7 +8,7 @@ class MetaModel(type):
   def __new__(cls, name, bases, dct):
     attrs = {}
     for key, val in dct.items():
-      if isinstance(val, fields.Field):
+      if isinstance(val, fields.BaseField):
         attrs[key] = val
 
     typ = type.__new__(cls, name, bases, dct)
