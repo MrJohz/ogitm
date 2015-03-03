@@ -1,28 +1,9 @@
 from . import fields
 
-def create_init(attrs):
-
-  def __init__(self, **kwargs):
-    sets = {}
-    for key, val in kwargs.items():
-      if key in attrs:
-        sets[key] = val
-      else:
-        raise ValueError("Unrecognised keyword argument {k}".format(k=key))
-
-    for key, field in attrs.items():
-      val = sets.get(key, None)
-
-      if field.check(val):
-        self.__setattr__(key, val)
-      else:
-        raise ValueError(
-          "Value {v} failed acceptance check for key {k}".format(k=key, v=val))
-
-  return __init__
-
 
 class MetaModel(type):
+
+  type_attributes = {}
 
   def __new__(cls, name, bases, dct):
     attrs = {}
@@ -30,15 +11,34 @@ class MetaModel(type):
       if isinstance(val, fields.Field):
         attrs[key] = val
 
-    dct['_attrs'] = attrs
+    typ = type.__new__(cls, name, bases, dct)
+    cls.type_attributes[typ] = attrs
+    return typ
 
-    if "__init__" not in dct:
-      dct["__init__"] = create_init(attrs)
+  @classmethod
+  def get_attributes(cls, instance):
+    return cls.type_attributes[instance.__class__]
 
-    print(attrs)
-    return type.__new__(cls, name, bases, dct)
 
 class Model(metaclass=MetaModel):
+
+  def __init__(self, **kwargs):
+    to_set = {}
+    attrs = MetaModel.get_attributes(self)
+
+    for key, val in kwargs.items():
+      if key in attrs:
+        to_set[key] = val
+      else:
+        raise ValueError("Unrecognised keyword argument {k}".format(k=key))
+
+    for key, field in attrs.items():
+      val = to_set.get(key, None)
+      if field.check(val):
+        setattr(self, key, val)
+      else:
+        raise ValueError(
+          "Value {v} failed acceptance check for key {k}".format(k=key, v=val))
 
   def save():
     pass
