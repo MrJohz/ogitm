@@ -1,6 +1,8 @@
 import pytest
 from ogitm import fields
 
+# TODO: Number test (should take max/min from Integer)
+
 
 class TestBaseField:
 
@@ -103,3 +105,55 @@ class TestFloatField:
     assert sf.check(34)
     assert sf.check(".4")
     assert not sf.check("hello")
+
+
+class TestBooleanField:
+
+  def test_bare_instantiation(self):
+    sf = fields.Boolean()
+    assert sf.check(True)
+    assert sf.check(False)
+    assert sf.check(1)
+    assert sf.check(0)
+    assert not sf.check(34)
+    assert not sf.check(1.0)
+    assert not sf.check("True")
+    assert not sf.check("False")
+    assert not sf.check("HJAKSDHJKAS")
+
+  def test_boolean_coersion(self):
+    sf = fields.Boolean(coerce=fields.coerce_boolean)
+    assert sf.check(True)
+    assert sf.check(False)
+    assert sf.check("True")
+    assert sf.check("t")
+    assert sf.check("false")
+    assert sf.check("F")
+    assert sf.check("on")
+    assert sf.check("off")
+    assert sf.check("yes")
+    assert sf.check("y")
+    assert sf.check("no")
+    assert sf.check("n")
+    assert sf.check("trUE")
+    assert not sf.check("hello")
+    assert not sf.check("0.2")
+    assert not sf.check(42.0)
+
+  def test_nullable(self):
+    sf = fields.Boolean()
+    assert sf.check(None)
+    sf = fields.Boolean(nullable=False)
+    assert not sf.check(None)
+
+
+class TestChoiceField:
+
+  def test_bare_instantiation(self):
+    sf = fields.Choice(choices=["1", "goodbye"])
+    assert sf.check("1")
+    assert sf.check("goodbye")
+    assert not sf.check("Neither of those")
+    assert not sf.check(1)
+    with pytest.raises(ValueError):
+      sf = fields.Choice()

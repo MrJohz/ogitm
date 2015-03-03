@@ -174,3 +174,66 @@ class Float(Number):
       return False
 
     return True
+
+
+BOOLEAN_TRUE = ("yes", "y", "true", "t", "on")
+BOOLEAN_FALSE = ("no", "n", "false", "f", "off")
+
+def coerce_boolean(val):
+  if isinstance(val, str):
+    if val.lower() in BOOLEAN_TRUE:
+      return True
+    elif val.lower() in BOOLEAN_FALSE:
+      return False
+
+  ival = int(val) # will raise ValueError if impossible
+  if ival == 1:
+    return True
+  elif ival == 0:
+    return False
+  else:
+    raise ValueError("Could not coerce {val}".format(val=val))
+
+
+class Boolean(BaseField):
+
+  def __init__(self, **kwargs):
+    super().__init__(**kwargs)
+
+  def check(self, val):
+    if not super().check(val):
+      return False
+
+    val = self.coerce(val)
+    if not self.type_check(val, (bool, int)):
+      return False
+    if val is not None and int(val) not in (0, 1):
+      return False
+
+    return True
+
+
+class Choice(BaseField):
+
+  def __init__(self, **kwargs):
+    try:
+      self.choices = kwargs.pop('choices')
+    except KeyError:
+      raise ValueError("Choice type requires 'choice' parameter")
+
+    self.typ = kwargs.pop('typ', object)
+    super().__init__(**kwargs)
+
+  def check(self, val):
+    if not super().check(val):
+      return False
+
+    val = self.coerce(val)
+    if not self.type_check(val, self.typ):
+      return False
+
+    if val not in self.choices:
+      return False
+
+    return True
+
