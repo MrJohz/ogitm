@@ -1,11 +1,28 @@
 import abc
 import re
+import types
+import numbers
 
-class _AlwaysSuccessfulRe:
-  def search(*args, **kwargs):
-    return True
+ALWAYS_SUCCESSFUL_RE = types.SimpleNamespace()
+ALWAYS_SUCCESSFUL_RE.search = lambda *args, **kwargs: True
+
 
 class BaseField(abc.ABC):
+  """Abstract Base Class for field types.
+
+  Cannot be instantiated, but should be inherited to provide all the
+  useful information that a field might need.
+
+  Arguments:
+
+    nullable (bool) -- True if this field can be None/null, False
+        otherwise.  Defaults to True.
+
+    coerce (func x: x) -- A function that can coerce any input into
+        input of a valid type.  If it cannot coerce, it should either
+        return "False" or raise a ValueError.  Defaults to a no-op.
+        e.g. `coerce=int` would convert values to int where possible.
+  """
 
   def __init__(self, **kwargs):
     self.nullable = kwargs.pop('nullable', True)
@@ -16,19 +33,62 @@ class BaseField(abc.ABC):
 
   @abc.abstractmethod
   def check(self, val):
+    """Base case method to check if a value is allowed by this field.
+
+    Must be overriden.  Currently only returns True, but may do its
+    own checking in future, and so should probably be checked before
+    any overriden method.
+
+    Arguments:
+
+      val (any) -- Value to check.
+
+    Returns (bool) -- Whether that value is allowed by the parameters
+        given to this field.
+    """
     return True
 
   def coerce(self, val):
+    """Attempt to coerce a value using the pre-defined function.
+
+    If no function was passed in, the default operation is to
+    return the value straight through.  If the function fails to
+    coerce (i.e. raises ValueError), the value is returned
+    unchanged.  (`type_check` should therefore always be used to
+    check the type of a coerced value.)
+
+    Arguments:
+
+      val (any) -- Value to coerce
+
+    Returns (any) -- Coerced value
+    """
     try:
       return self.coerce_func(val)
     except ValueError:
       return val
 
   def type_check(self, val, typ):
+    """Check if value is of a certain type (using nullability).
+
+    If this field instance can be nulled, checks if the val is
+    either of type `typ` or of the None type.  Otherwise, it just
+    checks if the val is of type `typ`.  Note that `typ` is passed
+    straight through to `isinstance`, so it can be any value allowed
+    by the second parameter of `isinstance`.
+
+    Arguments:
+
+      val (any) -- Value to check
+      typ (type | Tuple[type]) -- Type(s) to check against
+
+    Returns (bool) -- Whether val is of type typ.
+    """
     if self.nullable or val is not None:
       return isinstance(val, typ) or isinstance(val, type(None))
     else:
       return isinstance(val, typ)
+
 
 class String(BaseField):
 
@@ -37,7 +97,7 @@ class String(BaseField):
     super().__init__(**kwargs)
 
     if regex is None:
-      self.regex = _AlwaysSuccessfulRe()
+      self.regex = ALWAYS_SUCCESSFUL_RE
     elif isinstance(regex, str):
       self.regex = re.compile(regex)
     else:
@@ -56,11 +116,35 @@ class String(BaseField):
 
     return True
 
-class Integer(BaseField):
+
+class Number(BaseField):
+  # NOTE: more specifically, *real* numbers
 
   def __init__(self, **kwargs):
     self.min = kwargs.pop('min', None)
     self.max = kwargs.pop('max', None)
+    super().__init__(**kwargs)
+
+  def check(self, val):
+    if not super().check(val):
+      return False
+
+    val = self.coerce(val)
+    if not self.type_check(val, numbers.Real):
+      return False
+
+    if self.min is not None and val < self.min:
+      return False
+
+    if self.max is not None and val > self.max:
+      return False
+
+    return True
+
+
+class Integer(Number):
+
+  def __init__(self, **kwargs):
     super().__init__(**kwargs)
 
   def check(self, val):
@@ -73,12 +157,20 @@ class Integer(BaseField):
     if not self.type_check(val, int) or isinstance(val, bool):
       return False
 
-    if self.min is not None:
-      if val < self.min:
-        return False
+    return True
 
-    if self.max is not None:
-      if val > self.max:
-        return False
+
+class Float(Number):
+
+  def __init__(self, **kwargs):
+    super().__init__(**kwargs)
+
+  def check(self, val):
+    if not super().check(val):
+      return False
+
+    val = self.coerce(val)
+    if not self.type_check(val, float):
+      return False
 
     return True
