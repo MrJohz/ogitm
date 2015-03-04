@@ -231,11 +231,14 @@ class Boolean(BaseField):
 
 class Choice(BaseField):
 
-    def __init__(self, **kwargs):
-        try:
-            self.choices = kwargs.pop('choices')
-        except KeyError:
-            raise TypeError("Choice type requires 'choices' parameter")
+    def __init__(self, choices=None, **kwargs):
+        if choices is None:
+            try:
+                self.choices = kwargs.pop('choices')
+            except KeyError:
+                raise TypeError("Choice type requires 'choices' parameter")
+        else:
+            self.choices = choices
 
         super().__init__(**kwargs)
 

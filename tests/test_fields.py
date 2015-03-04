@@ -3,6 +3,7 @@ from ogitm import fields
 
 # TODO: Number test (should take max/min from Integer)
 # TODO: Choice coersion, type-check tests
+# TODO: Fix coercion spellings
 
 
 class TestBaseField:
@@ -101,6 +102,7 @@ class TestFloatField:
         sf = fields.Float()
         assert sf.check(3.4)
         assert sf.check(34.0)
+        assert not sf.check(2)
         assert not sf.check("hello")
         assert not sf.check("3.5")
 
@@ -164,7 +166,7 @@ class TestChoiceField:
             sf = fields.Choice()
 
     def test_nullable(self):
-        sf = fields.Choice(choices=["hello", "goodbye"])
+        sf = fields.Choice(choices=("hello", "goodbye"))
         assert sf.check(None)
         sf = fields.Choice(choices=["hello", "goodbye"], nullable=True)
         assert sf.check(None)
@@ -174,3 +176,11 @@ class TestChoiceField:
     def test_typing(self):
         with pytest.raises(TypeError):
             sf = fields.Choice(choices=["1", 0], coerce=str)
+
+    def test_arg_form(self):
+        sf = fields.Choice(('hello', 'goodbye'))
+        assert sf.check("hello")
+        assert sf.check("goodbye")
+        assert not sf.check("not hello or goodbye")
+        with pytest.raises(TypeError):
+            fields.Choice(['h', 'b'], choices=('a', 'b'))
