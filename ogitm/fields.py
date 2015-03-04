@@ -37,7 +37,8 @@ class BaseField(abc.ABC):
 
         self.default = kwargs.pop('default', NULL_SENTINEL)
         self.nullable = kwargs.pop('nullable', True)
-        self._accept_none = self.nullable or (self.default is not NULL_SENTINEL)
+        self._accept_none = self.nullable or \
+            (self.default is not NULL_SENTINEL)
 
         if len(kwargs) > 0:
             msg = "Unrecognised parameter(s) passed to field: {d}"

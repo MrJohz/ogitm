@@ -94,3 +94,15 @@ class TestGitDB:
         doc2 = gdb.insert({'three': 'four'})
         assert gdb.get(doc1) == {'one': 'two'}
         assert gdb.get(doc2) == {'three': 'four'}
+
+    def test_multiple_instances(self, tmpdir):
+        g1 = self.gdb(tmpdir)
+        g2 = self.gdb(tmpdir)
+
+        doc1 = g1.insert({'a': 'b'})
+        assert g2.get(doc1) == {'a': 'b'}
+
+        doc2 = g2.insert({'c': 'd'})
+        assert g1.get(doc2) == {'c': 'd'}
+
+        assert doc1 != doc2
