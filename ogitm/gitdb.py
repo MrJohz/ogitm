@@ -2,7 +2,7 @@ import pygit2 as pg2
 import json
 
 
-SIGNATURE = pg2.Signature('OGITM', '-')
+SIGNATURE = pg2.Signature('OGitM', '-')
 
 
 class TreeWrapper:
@@ -70,7 +70,8 @@ class GitDB:
 
     def insert(self, document):
         d_id = self._get_next_id()
-        self.current_tree['doc-{id}'.format(id=d_id)]
+        doc = json.dumps(document)
+        self.current_tree['doc-{id}'.format(id=d_id)] = doc
         self.current_tree.save('insert doc-{id}'.format(id=d_id))
         return d_id
 
@@ -78,4 +79,5 @@ class GitDB:
         return self.current_tree.save()
 
     def get(self, doc_id):
-        return None
+        doc = self.current_tree.get('doc-{id}'.format(id=doc_id))
+        return json.loads(doc)

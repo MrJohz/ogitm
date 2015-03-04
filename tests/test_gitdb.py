@@ -75,5 +75,22 @@ class TestTreeWrapper:
             tree2['boggle']
 
 
-def test_gitdb(tmpdir):
-    gitdb.GitDB(str(tmpdir))
+class TestGitDB:
+
+    @pytest.fixture
+    def gdb(self, tmpdir):
+        return gitdb.GitDB(str(tmpdir))
+
+    def test_instantiation(self, tmpdir):
+        gdb = gitdb.GitDB(str(tmpdir))
+        assert gdb
+
+    def test_insertion_removal(self, gdb):
+        doc_id = gdb.insert({'one': 'two'})
+        assert gdb.get(doc_id) == {'one': 'two'}
+
+    def test_multiple_inserts(self, gdb):
+        doc1 = gdb.insert({'one': 'two'})
+        doc2 = gdb.insert({'three': 'four'})
+        assert gdb.get(doc1) == {'one': 'two'}
+        assert gdb.get(doc2) == {'three': 'four'}
