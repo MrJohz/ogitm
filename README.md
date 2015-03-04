@@ -1,6 +1,6 @@
 # OGitM
 
-> Because doing stupid things with git is surprisingly fun.
+**Because doing stupid things with git is surprisingly fun.**
 
 OGitM is an ORM, but where the relational database that underlies the entire
 mapping has been replaced by an awful attempt at replicating a stupidly basic
