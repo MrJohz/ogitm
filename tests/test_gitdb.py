@@ -32,6 +32,15 @@ class TestTreeWrapper:
         with pytest.raises(KeyError):
             gittree['bob']
 
+        gittree['bob'] = 'Joe Bloggs'
+        gittree.save()
+        assert gittree['bob'] == 'Joe Bloggs'
+        gittree.clear()
+        assert gittree.get('bob') is None
+        assert 'bob' not in gittree
+        with pytest.raises(KeyError):
+            gittree['bob']
+
     def test_saving_data(self, gittree):
         gittree['doo-dah'] = 'yabadabadoo'
         gittree.save()
@@ -42,6 +51,17 @@ class TestTreeWrapper:
         with pytest.raises(KeyError):
             gittree['doo-dah']
         assert gittree.get('doo-dah') is None
+
+    def test_contains(self, gittree):
+        gittree['brainfart'] = 'boabab'
+        assert gittree['brainfart'] == 'boabab'
+        assert 'brainfart' in gittree
+        assert 'carrot' not in gittree
+
+        gittree.save()
+
+        assert 'brainfart' in gittree
+        assert 'carrot' not in gittree
 
     def test_saving_over_multiple_instances(self, tmpdir):
         tree = self.gittree(tmpdir)
@@ -94,6 +114,68 @@ class TestGitDB:
         doc2 = gdb.insert({'three': 'four'})
         assert gdb.get(doc1) == {'one': 'two'}
         assert gdb.get(doc2) == {'three': 'four'}
+
+    def test_transaction(self, tmpdir):
+        g1 = self.gdb(tmpdir)
+        g2 = self.gdb(tmpdir)
+
+        assert not g1.transaction_open
+        assert not g2.transaction_open
+        g1.insert({'one': 'two'})
+        assert not g1.transaction_open
+        assert not g2.transaction_open
+
+        g1.begin_transaction()
+        assert g1.transaction_open
+        assert not g2.transaction_open
+        i1 = g1.insert({'one': 'two'})
+        with pytest.raises(ValueError):
+            g2.get(i1)
+        g1.commit()
+        assert g2.get(i1) == {'one': 'two'}
+
+        g1.begin_transaction()
+        i2 = g1.insert({'three': 'four'})
+        with pytest.raises(ValueError):
+            g2.get(i2)
+        g1.rollback()
+        with pytest.raises(ValueError):
+            g2.get(i2)
+
+        with g2.transaction():
+            i3 = g2.insert({'five': 'six'})
+            assert g2.transaction_open
+            assert not g1.transaction_open
+            with pytest.raises(ValueError):
+                g1.get(i3)
+
+        assert g2.get(i3) == {'five': 'six'}
+
+        with pytest.raises(AssertionError):
+            with g2.transaction():
+                i4 = g2.insert({'seven': 'eight'})
+                raise AssertionError('Thrown deliberately')
+
+        with pytest.raises(ValueError):
+            g1.get(i4)
+
+        g1.begin_transaction()
+        with pytest.raises(ValueError):
+            g1.begin_transaction()
+        g1.rollback()
+
+        with pytest.raises(ValueError):
+            g2.commit()
+        with pytest.raises(ValueError):
+            g2.rollback()
+
+        with g1.transaction():
+            with pytest.raises(ValueError):
+                g1.begin_transaction()
+            with pytest.raises(ValueError):
+                g1.commit()
+            with pytest.raises(ValueError):
+                g1.rollback()
 
     def test_multiple_instances(self, tmpdir):
         g1 = self.gdb(tmpdir)

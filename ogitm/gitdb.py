@@ -1,6 +1,7 @@
 import pygit2 as pg2
 import json
 from os import path
+import contextlib
 
 
 SIGNATURE = pg2.Signature('OGitM', '-')
@@ -64,11 +65,17 @@ class TreeWrapper:
         self._tree.clear()
 
     def save(self, msg=''):
+        if self._tree is None:
+            return
+
         tid = self._tree.write()
         self._repo.create_commit(
             'refs/heads/master', SIGNATURE, SIGNATURE,
             '', tid, self._get_parents())
         self._tree = None
+
+    def rollback(self):
+        self._tree is None
 
     def _get_parents(self):
         if self._repo.is_empty:
@@ -88,6 +95,24 @@ class TreeWrapper:
             return None
         else:
             return self._repo[self._repo.head.target].tree
+
+
+# Used to allow GitDB.transaction() context manager
+class _transaction:
+
+    def __init__(self, s):
+        self.s = s
+
+    def __enter__(self):
+        self.s.begin_transaction()
+        self.s._context_managed = True
+
+    def __exit__(self, et, ev, tb):
+        self.s._context_managed = False
+        if et is not None:
+            self.s.rollback()
+        else:
+            self.s.commit()
 
 
 class GitDB:
@@ -113,11 +138,55 @@ class GitDB:
         self.meta_repo = pg2.init_repository(self.mr_loc, bare=True)
         self.meta_tree = TreeWrapper(self.meta_repo)
 
+        self._transaction_open = False
+        self._context_managed = False
+
+    @property
+    def transaction_open(self):
+        return self._transaction_open
+
+    def begin_transaction(self):
+        if self._context_managed:
+            m = "Cannot manually manage transaction inside context manager"
+            raise ValueError(m)
+        elif self._transaction_open:
+            m = "Cannot begin transaction when there is an open transaction"
+            raise ValueError(m)
+
+        self._transaction_open = True
+
+    def commit(self):
+        if self._context_managed:
+            m = "Cannot manually manage transaction inside context manager"
+            raise ValueError(m)
+        elif not self._transaction_open:
+            m = "Cannot commit when there is not open transaction"
+            raise ValueError(m)
+
+        self._transaction_open = False
+        self.save()
+
+    def rollback(self):
+        if self._context_managed:
+            m = "Cannot manually manage transaction inside context manager"
+            raise ValueError(m)
+        elif not self._transaction_open:
+            m = "Cannot rollback when there is not open transaction"
+            raise ValueError(m)
+
+        self._transaction_open = False
+        self.data_tree.rollback()
+
+    def transaction(self):
+        return _transaction(self)
+
+
     def insert(self, document):
         d_id = self._get_next_id()
         doc = json.dumps(document)
         self.data_tree['doc-{id}'.format(id=d_id)] = doc
-        self.data_tree.save('insert doc-{id}'.format(id=d_id))
+        if not self.transaction_open:
+            self.data_tree.save('insert doc-{id}'.format(id=d_id))
         return d_id
 
     def save(self, msg='-'):
