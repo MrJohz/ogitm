@@ -1,10 +1,6 @@
 import pytest
 from ogitm import fields
 
-# TODO: Number test (should take max/min from Integer)
-# TODO: Choice coersion, type-check tests
-# TODO: Fix coercion spellings
-
 
 class TestBaseField:
 
@@ -16,11 +12,11 @@ class TestBaseField:
         with pytest.raises(TypeError):
             fields.String(unrecognised_filed=False)
 
-    def test_wrong_coercion(self):
-        sf = fields.String(coerce=int)
-        assert sf.check("Hello")  # TODO: is this right?
-        assert not sf.check("522")
-        assert not sf.check(52)
+#    def test_wrong_coercion(self):
+#        sf = fields.String(coerce=int)
+#        assert sf.check("Hello")  # TODO: is this right?
+#        assert not sf.check("522")
+#        assert not sf.check(52)
 
     def test_nullable(self):
         sf = fields.String(nullable=False)
@@ -66,6 +62,30 @@ class TestStringField:
         assert not sf.check(22)
 
 
+class TestNumberField:
+
+    def test_bare_instantiation(self):
+        sf = fields.Number()
+        assert sf.check(34)
+        assert sf.check(3.4)
+        assert not sf.check("hello")
+        assert not sf.check(2 + 3j)  # real numbers only
+
+    def test_minimum(self):
+        sf = fields.Number(min=3)
+        assert sf.check(100)
+        assert sf.check(3)
+        assert sf.check(3.1)
+        assert not sf.check(1)
+
+    def test_maximum(self):
+        sf = fields.Number(max=4)
+        assert sf.check(-100)
+        assert sf.check(4)
+        assert sf.check(3.1)
+        assert not sf.check(100)
+
+
 class TestIntegerField:
 
     def test_bare_instantiation(self):
@@ -106,7 +126,7 @@ class TestFloatField:
         assert not sf.check("hello")
         assert not sf.check("3.5")
 
-    def test_coersion(self):
+    def test_coercion(self):
         sf = fields.Float(coerce=float)
         assert sf.check(3.4)
         assert sf.check(34)
@@ -128,7 +148,7 @@ class TestBooleanField:
         assert not sf.check("False")
         assert not sf.check("HJAKSDHJKAS")
 
-    def test_boolean_coersion(self):
+    def test_boolean_coercion(self):
         sf = fields.Boolean(coerce=fields.coerce_boolean)
         assert sf.check(True)
         assert sf.check(False)
@@ -175,7 +195,7 @@ class TestChoiceField:
 
     def test_typing(self):
         with pytest.raises(TypeError):
-            sf = fields.Choice(choices=["1", 0], coerce=str)
+            fields.Choice(choices=["1", 0], coerce=str)
 
     def test_arg_form(self):
         sf = fields.Choice(('hello', 'goodbye'))

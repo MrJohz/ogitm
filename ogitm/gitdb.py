@@ -1,7 +1,6 @@
 import pygit2 as pg2
 import json
 from os import path
-import contextlib
 
 
 SIGNATURE = pg2.Signature('OGitM', '-')
