@@ -30,7 +30,7 @@ class GitDB:
         self.current_tree.insert(str(d_id), d_oid, pg2.GIT_FILEMODE_BLOB)
 
         self.save('insert ' + str(d_id))
-        return doc_id
+        return d_id
 
     def save(self, msg='-'):
         tree_id = self.current_tree.write()

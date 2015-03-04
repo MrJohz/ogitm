@@ -1,1 +1,1 @@
-from .ogitm import Model
+from .ogitm import Model  # pragma: no flakes
