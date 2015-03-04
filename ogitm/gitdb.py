@@ -180,7 +180,6 @@ class GitDB:
     def transaction(self):
         return _transaction(self)
 
-
     def insert(self, document):
         d_id = self._get_next_id()
         doc = json.dumps(document)

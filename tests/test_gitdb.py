@@ -44,6 +44,7 @@ class TestTreeWrapper:
     def test_saving_data(self, gittree):
         gittree['doo-dah'] = 'yabadabadoo'
         gittree.save()
+        gittree.save()
 
         assert gittree['doo-dah'] == 'yabadabadoo'
         assert gittree.get('doo-dah') == 'yabadabadoo'
