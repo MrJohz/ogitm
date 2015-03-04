@@ -6,6 +6,8 @@ import numbers
 ALWAYS_SUCCESSFUL_RE = types.SimpleNamespace()
 ALWAYS_SUCCESSFUL_RE.search = lambda *args, **kwargs: True
 
+NULL_SENTINEL = object()
+
 
 class BaseField(abc.ABC):
 
@@ -33,12 +35,13 @@ class BaseField(abc.ABC):
         # pass-through by default
         self.coerce_func = kwargs.pop('coerce', lambda x: x)
 
-        self.default = kwargs.pop('default', None)
+        self.default = kwargs.pop('default', NULL_SENTINEL)
         self.nullable = kwargs.pop('nullable', True)
-        self._check_none = self.nullable or (self.default is not None)
+        self._accept_none = self.nullable or (self.default is not NULL_SENTINEL)
 
         if len(kwargs) > 0:
-            raise TypeError("Too many paramaters passed to field")
+            msg = "Unrecognised parameter(s) passed to field: {d}"
+            raise TypeError(msg.format(d=kwargs))
 
     @abc.abstractmethod
     def check(self, val):
@@ -77,7 +80,7 @@ class BaseField(abc.ABC):
         except ValueError:
             return val
 
-    def type_check(self, val, typ):
+    def type_check(self, val, typ=None):
         """Check if value is of a certain type (using nullability).
 
         If this field instance can be nulled, checks if the val is
@@ -93,8 +96,11 @@ class BaseField(abc.ABC):
 
         Returns (bool) -- Whether val is of type typ.
         """
-        if self._check_none or val is not None:
-            return isinstance(val, typ) or isinstance(val, type(None))
+        if typ is None:  # just check nullability
+            return self._accept_none or val is not None
+
+        if self._accept_none:
+            return isinstance(val, typ) or val is None
         else:
             return isinstance(val, typ)
 
@@ -229,17 +235,21 @@ class Choice(BaseField):
         try:
             self.choices = kwargs.pop('choices')
         except KeyError:
-            raise ValueError("Choice type requires 'choice' parameter")
+            raise TypeError("Choice type requires 'choices' parameter")
 
-        self.typ = kwargs.pop('typ', object)
         super().__init__(**kwargs)
+
+        for item in self.choices:
+            if self.coerce(item) != item:
+                msg = "Coercion func prevents selecting item {i} from choices"
+                raise TypeError(msg.format(i=item))
 
     def check(self, val):
         if not super().check(val):  # pragma: no cover
             return False
 
         val = self.coerce(val)
-        if not self.type_check(val, self.typ):
+        if not self.type_check(val):
             return False
 
         if val not in self.choices:

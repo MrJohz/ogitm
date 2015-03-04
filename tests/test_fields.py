@@ -160,7 +160,7 @@ class TestChoiceField:
         assert sf.check("goodbye")
         assert not sf.check("Neither of those")
         assert not sf.check(1)
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             sf = fields.Choice()
 
     def test_nullable(self):
@@ -170,3 +170,7 @@ class TestChoiceField:
         assert sf.check(None)
         sf = fields.Choice(choices=["hello", "goodbye"], nullable=False)
         assert not sf.check(None)
+
+    def test_typing(self):
+        with pytest.raises(TypeError):
+            sf = fields.Choice(choices=["1", 0], coerce=str)
