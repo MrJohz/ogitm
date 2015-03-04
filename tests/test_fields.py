@@ -2,6 +2,8 @@ import pytest
 from ogitm import fields
 
 # TODO: Number test (should take max/min from Integer)
+# TODO: Choice coersion, type-check tests
+# TODO:
 
 
 class TestBaseField:
@@ -9,6 +11,10 @@ class TestBaseField:
   def test_non_instantiable(self):
     with pytest.raises(TypeError):
       fields.BaseField()
+
+  def test_invalid_names(self):
+    with pytest.raises(TypeError):
+      fields.String(unrecognised_filed=False)
 
   def test_wrong_coercion(self):
     sf = fields.String(coerce=int)
@@ -157,3 +163,12 @@ class TestChoiceField:
     assert not sf.check(1)
     with pytest.raises(ValueError):
       sf = fields.Choice()
+
+  def test_nullable(self):
+    sf = fields.Choice(choices=["hello", "goodbye"])
+    assert sf.check(None)
+    sf = fields.Choice(choices=["hello", "goodbye"], nullable=True)
+    assert sf.check(None)
+    sf = fields.Choice(choices=["hello", "goodbye"], nullable=False)
+    assert not sf.check(None)
+

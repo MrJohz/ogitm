@@ -110,7 +110,7 @@ class String(BaseField):
       self.regex = regex
 
   def check(self, val):
-    if not super().check(val):
+    if not super().check(val): # pragma: no cover
       return False
 
     val = self.coerce(val)
@@ -132,7 +132,7 @@ class Number(BaseField):
     super().__init__(**kwargs)
 
   def check(self, val):
-    if not super().check(val):
+    if not super().check(val): # pragma: no cover
       return False
 
     val = self.coerce(val)
@@ -207,7 +207,7 @@ class Boolean(BaseField):
     super().__init__(**kwargs)
 
   def check(self, val):
-    if not super().check(val):
+    if not super().check(val): # pragma: no cover
       return False
 
     val = self.coerce(val)
@@ -231,7 +231,7 @@ class Choice(BaseField):
     super().__init__(**kwargs)
 
   def check(self, val):
-    if not super().check(val):
+    if not super().check(val): # pragma: no cover
       return False
 
     val = self.coerce(val)
@@ -239,7 +239,8 @@ class Choice(BaseField):
       return False
 
     if val not in self.choices:
-      return False
+      if not (self.nullable and val is None):
+        return False
 
     return True
 
