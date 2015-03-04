@@ -3,7 +3,6 @@ from ogitm import fields
 
 # TODO: Number test (should take max/min from Integer)
 # TODO: Choice coersion, type-check tests
-# TODO:
 
 
 class TestBaseField:
