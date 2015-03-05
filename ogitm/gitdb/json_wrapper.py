@@ -11,7 +11,7 @@ methods are called on it.
 
 
 import json
-from .compat import MutableMapping
+from ..compat import MutableMapping
 
 
 class JsonDictWrapper(MutableMapping):

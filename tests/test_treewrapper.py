@@ -1,4 +1,4 @@
-from ogitm import treewrapper
+from ogitm.gitdb import treewrapper
 import pygit2
 import pytest
 

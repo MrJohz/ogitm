@@ -1,9 +1,11 @@
 import pygit2 as pg2
 import json
 from os import path
+from functools import reduce
 
 from .treewrapper import TreeWrapper
 from .json_wrapper import JsonDictWrapper
+from .search_functions import SearchFunction
 
 
 # Used to allow GitDB.transaction() context manager
@@ -117,36 +119,32 @@ class GitDB:
         return doc
 
     def find(self, where):
-        ids = []
+        all_ids = {int(i[4:]) for i in self.data_tree.items_list()
+                   if i.startswith('doc-')}
 
-        if len(where) == 0:
-            return self.get_all()
+        id_sets = [all_ids]
 
-        for key, val in where.items():
-            index = self.data_tree.get(
-                    'index-{key}'.format(key=key), {})
+        for key, term in where.items():
+            index = self.data_tree.get('index-{key}'.format(key=key), {})
 
-            if isinstance(val, dict):
-                ids.append(set(self._find_complex(key, val, index)))
-            else:
-                ids.append(set(self._find_simple(key, val, index)))
+            if isinstance(term, dict):
+                id_sets.append(self._find_complex(key, term, index, all_ids))
 
-        doc_ids = ids[0]
-        for doc_set in ids:
-            doc_ids &= doc_set
+            else:  # simple term, i.e. name="bob"
+                id_sets.append(self._find_simple(key, term, index))
 
-        docs = []
-        for doc_id in doc_ids:
-            ds = self.data_tree['doc-{id}'.format(id=doc_id)]
-            docs.append(ds)
+        doc_ids = reduce(lambda x, y: x & y, id_sets)
 
-        return docs
+        return [self.data_tree['doc-{id}'.format(id=i)] for i in doc_ids]
 
     def _find_simple(self, key, val, index):
         vals = json.dumps(val)
-        return index.get(vals, [])
+        return set(index.get(vals, []))
 
-    def _find_complex(self, key, val, index):
-        ids = []
-        for query, argument in val:
-            ids.append()
+    def _find_complex(self, key, val, index, al):
+        inc_sets = []
+
+        for query, argument in val.items():
+            inc_sets.append(SearchFunction.get(query)(key, val, index, al))
+
+        return reduce(lambda x, y: x | y, inc_sets)

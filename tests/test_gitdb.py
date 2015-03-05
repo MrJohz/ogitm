@@ -109,10 +109,15 @@ class TestGitDB:
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
 
-    @pytest.mark.xfail
+    # @pytest.mark.xfail
     def test_searching_complex(self, gdb):
         gdb.insert({'square': True, 'circle': False})
         gdb.insert({'circle': True, 'square': False})
         gdb.insert({'circle': False, 'square': False, 'triangle': True})
         assert (gdb.find({'triangle': {'exists': True}}) ==
                 [{'circle': False, 'square': False, 'triangle': True}])
+
+        assert ({'square': True, 'circle': False}
+                in gdb.find({'triangle': {'exists': False}}))
+        assert ({'circle': True, 'square': False}
+                in gdb.find({'triangle': {'exists': False}}))
