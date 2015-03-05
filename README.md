@@ -1,5 +1,7 @@
 # OGitM
 
+[![Travis](https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square)](https://travis-ci.org/MrJohz/ogitm)
+
 **Because doing stupid things with git is surprisingly fun.**
 
 OGitM is an ORM, but where the relational database that underlies the entire

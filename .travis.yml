@@ -19,4 +19,8 @@ install:
   - "pip install -r requirements.txt"
   - "pip install -r dev-requirements.txt"
 
-script: "py.test --pep8 --flakes --clearcache tests ogitm"
+script:
+  - "py.test --pep8 --flakes --clearcache --cov ogitm --cov-report term-missing tests ogitm"
+
+after_success:
+  - coveralls
