@@ -1,0 +1,12 @@
+language: python
+python:
+  - "3.4"
+  - "3.3"
+  - "3.2"
+  - "pypy3"
+
+install:
+  - "pip install -r requirements.txt"
+  - "pip install -r dev-requiements.txt"
+
+script: "py.test --pep8 --flakes --clearcache"
