@@ -20,4 +20,4 @@ install:
   - "pip install -r requirements.txt"
   - "pip install -r dev-requirements.txt"
 
-script: "py.test --pep8 --flakes --clearcache"
+script: "py.test --pep8 --flakes --clearcache tests ogitm"
