@@ -2,5 +2,5 @@ try:
     from types import SimpleNamespace  # pragma: no flakes
 except ImportError:
 
-    class SimpleNamepace:
+    class SimpleNamespace:
         pass
