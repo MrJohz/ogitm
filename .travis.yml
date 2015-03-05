@@ -13,7 +13,8 @@ before_install:
   - "cmake . -DCMAKE_INSTALL_PREFIX=$LIBGIT2"
   - "make"
   - "make install"
-  - export LDFLAGS="-Wl,-rpath='$LIBGIT2/lib',--enable-new-dtags $LDFLAGS"
+  - "export LDFLAGS="-Wl,-rpath='$LIBGIT2/lib',--enable-new-dtags $LDFLAGS"
+  - "cd ../"
 
 install:
   - "pip install -r requirements.txt"
