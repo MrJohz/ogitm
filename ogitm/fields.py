@@ -1,15 +1,16 @@
 import abc
 import re
-import types
 import numbers
 
-ALWAYS_SUCCESSFUL_RE = types.SimpleNamespace()
+from .compat import SimpleNamespace
+
+ALWAYS_SUCCESSFUL_RE = SimpleNamespace()
 ALWAYS_SUCCESSFUL_RE.search = lambda *args, **kwargs: True
 
 NULL_SENTINEL = object()
 
 
-class BaseField(abc.ABC):
+class BaseField(metaclass=abc.ABCMeta):
 
     """Abstract Base Class for field types.
 
