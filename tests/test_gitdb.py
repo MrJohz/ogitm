@@ -116,6 +116,18 @@ class TestGitDB:
         assert gdb.get(doc1) == {'one': 'two'}
         assert gdb.get(doc2) == {'three': 'four'}
 
+    def test_multiple_instances(self, tmpdir):
+        g1 = self.gdb(tmpdir)
+        g2 = self.gdb(tmpdir)
+
+        doc1 = g1.insert({'a': 'b'})
+        assert g2.get(doc1) == {'a': 'b'}
+
+        doc2 = g2.insert({'c': 'd'})
+        assert g1.get(doc2) == {'c': 'd'}
+
+        assert doc1 != doc2
+
     def test_transaction(self, tmpdir):
         g1 = self.gdb(tmpdir)
         g2 = self.gdb(tmpdir)
@@ -178,14 +190,22 @@ class TestGitDB:
             with pytest.raises(ValueError):
                 g1.rollback()
 
-    def test_multiple_instances(self, tmpdir):
-        g1 = self.gdb(tmpdir)
-        g2 = self.gdb(tmpdir)
+    def test_searching_simple(self, gdb):
+        gdb.insert({'square': True, 'circle': False})
+        gdb.insert({'circle': True, 'square': False})
+        gdb.insert({'circle': False, 'square': False, 'triangle': True})
+        assert (gdb.find({'square': True}) ==
+                [{'square': True, 'circle': False}])
+        assert gdb.find({'triangle': False}) == []
+        assert {'circle': False, 'square': True} in gdb.find({'circle': False})
+        assert ({'circle': False, 'square': False, 'triangle': True}
+                in gdb.find({'circle': False}))
+        assert len(gdb.find({'circle': False})) == 2
 
-        doc1 = g1.insert({'a': 'b'})
-        assert g2.get(doc1) == {'a': 'b'}
-
-        doc2 = g2.insert({'c': 'd'})
-        assert g1.get(doc2) == {'c': 'd'}
-
-        assert doc1 != doc2
+    @pytest.mark.xfail
+    def test_searching_complex(self, gdb):
+        gdb.insert({'square': True, 'circle': False})
+        gdb.insert({'circle': True, 'square': False})
+        gdb.insert({'circle': False, 'square': False, 'triangle': True})
+        assert (gdb.find({'triangle': {'exists': True}}) ==
+                [{'circle': False, 'square': False, 'triangle': True}])

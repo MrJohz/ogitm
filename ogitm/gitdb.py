@@ -2,8 +2,10 @@ import pygit2 as pg2
 import json
 from os import path
 
+from .json_wrapper import JsonDictWrapper
 
-SIGNATURE = pg2.Signature('OGitM', '-')
+
+_SIGNATURE = pg2.Signature('OGitM', '-')
 
 
 class TreeWrapper:
@@ -69,7 +71,7 @@ class TreeWrapper:
 
         tid = self._tree.write()
         self._repo.create_commit(
-            'refs/heads/master', SIGNATURE, SIGNATURE,
+            'refs/heads/master', _SIGNATURE, _SIGNATURE,
             '', tid, self._get_parents())
         self._tree = None
 
@@ -131,7 +133,7 @@ class GitDB:
     def __init__(self, location):
         self.dr_loc = path.join(location, 'data')
         self.data_repo = pg2.init_repository(self.dr_loc, bare=True)
-        self.data_tree = TreeWrapper(self.data_repo)
+        self.data_tree = JsonDictWrapper(TreeWrapper(self.data_repo))
 
         self.mr_loc = path.join(location, 'meta')
         self.meta_repo = pg2.init_repository(self.mr_loc, bare=True)
@@ -181,8 +183,16 @@ class GitDB:
 
     def insert(self, document):
         d_id = self._get_next_id()
-        doc = json.dumps(document)
-        self.data_tree['doc-{id}'.format(id=d_id)] = doc
+        self.data_tree['doc-{id}'.format(id=d_id)] = document
+
+        # set up indexes
+        for key, val in document.items():
+            val = json.dumps(val)
+            index_name = 'index-{key}'.format(key=key)
+            index = self.data_tree.get(index_name, {})
+            index.setdefault(val, []).append(d_id)
+            self.data_tree[index_name] = index
+
         if not self.transaction_open:
             self.data_tree.save('insert doc-{id}'.format(id=d_id))
         return d_id
@@ -195,5 +205,23 @@ class GitDB:
         if doc is None:
             err = "No such document under id {id}".format(id=doc_id)
             raise ValueError(err)
-        else:
-            return json.loads(doc)
+
+        return doc
+
+    def find(self, where):
+        doc_ids = None
+
+        for key, val in where.items():
+            val = json.dumps(val)
+            ds = self.data_tree.get('index-{key}'.format(key=key), '{}')
+            if doc_ids is None:
+                doc_ids = set(ds.get(val, []))
+            else:
+                doc_ids.intersection(ds.get(val, []))
+
+        docs = []
+        for doc_id in doc_ids:
+            ds = self.data_tree['doc-{id}'.format(id=doc_id)]
+            docs.append(ds)
+
+        return docs

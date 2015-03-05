@@ -1,6 +1,8 @@
 # OGitM
 
-[![Travis](https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square)](https://travis-ci.org/MrJohz/ogitm)
+![Travis](https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square)
+![Coveralls](https://img.shields.io/coveralls/MrJohz/ogitm.svg?style=flat-square)
+
 
 **Because doing stupid things with git is surprisingly fun.**
 
