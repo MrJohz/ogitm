@@ -19,6 +19,9 @@ class JsonDictWrapper(MutableMapping):
     def __init__(self, d):
         self._d = d
 
+    def unwrap(self):
+        return self._d
+
     def __len__(self):
         return len(self._d)
 

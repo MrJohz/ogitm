@@ -10,7 +10,7 @@ class TreeWrapper:
         self._repo = repo
         self._working_tree = None
         self._last_saved_tree = None
-        self._working_contents = {}
+        self._working_contents = set()
 
     def __setitem__(self, name, text):
         if self._working_tree is None:
@@ -18,7 +18,7 @@ class TreeWrapper:
 
         blob_id = self._repo.create_blob(text)
         self._working_tree.insert(name, blob_id, pg2.GIT_FILEMODE_BLOB)
-        self._working_contents[name] = text
+        self._working_contents.add(name)
 
     def __getitem__(self, name):
         if self._working_tree is not None:
@@ -41,8 +41,7 @@ class TreeWrapper:
             self._new_working_tree()
 
         self._working_tree.remove(name)
-        if name in self._working_contents:
-            del self._working_contents[name]
+        self._working_contents.discard(name)
 
     def __contains__(self, name):
         if self._working_tree is None:
@@ -58,9 +57,7 @@ class TreeWrapper:
         if self._working_tree is None:
             return [entry.name for entry in self._get_tree()]
         else:
-            l = [entry.name for entry in self._last_saved_tree()]
-            l.extend([i for i in self._working_contents])
-            return l
+            return list(self._working_contents)
 
     def get(self, name, default=None):
         try:
@@ -100,11 +97,12 @@ class TreeWrapper:
 
     def _new_working_tree(self):
         self._last_saved_tree = self._get_tree()
-        self._working_contents.clear()
         if self._last_saved_tree is None:
             self._working_tree = self._repo.TreeBuilder()
+            self._working_contents.clear()
         else:
             self._working_tree = self._repo.TreeBuilder(self._last_saved_tree)
+            self._working_contents = {entry.name for entry in self._get_tree()}
 
     def _get_tree(self):
         if self._repo.is_empty:
@@ -112,4 +110,4 @@ class TreeWrapper:
         elif self._working_tree is None:
             return self._repo[self._repo.head.target].tree
         else:
-            return self._last_tree
+            return self._last_saved_tree

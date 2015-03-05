@@ -94,3 +94,20 @@ class TestTreeWrapper:
         tree2 = self.gittree(tmpdir)
         with pytest.raises(KeyError):
             tree2['boggle']
+
+    def test_list_items(self, gittree):
+        gittree['box'] = 'bubblicious'
+        gittree['square'] = 'boxifabulous'
+        gittree['bubble'] = 'squaretastic'
+        gittree.save()
+
+        assert set(gittree.items_list()) == {'box', 'square', 'bubble'}
+
+        gittree.clear()
+
+        assert gittree.items_list() == []
+
+        gittree.save()
+        gittree['box'] = 'bubblicious'
+        gittree['square'] = 'boxifabulous'
+        gittree['bubble'] = 'squaretastic'

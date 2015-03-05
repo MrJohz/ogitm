@@ -121,3 +121,6 @@ class TestGitDB:
                 in gdb.find({'triangle': {'exists': False}}))
         assert ({'circle': True, 'square': False}
                 in gdb.find({'triangle': {'exists': False}}))
+
+        with pytest.raises(KeyError):
+            gdb.find({'triangle': {'this search does not exist': 4}})
