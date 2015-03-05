@@ -3,7 +3,6 @@ python:
   - "3.4"
   - "3.3"
   - "3.2"
-  - "pypy3"
 
 before_install:
   - "export LIBGIT2=$VIRTUAL_ENV"
