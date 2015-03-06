@@ -141,10 +141,11 @@ class GitDB:
         vals = json.dumps(val)
         return set(index.get(vals, []))
 
-    def _find_complex(self, key, val, index, al):
+    def _find_complex(self, key, query, index, al):
         inc_sets = []
 
-        for query, argument in val.items():
-            inc_sets.append(SearchFunction.get(query)(key, val, index, al))
+        for operator, arg in query.items():
+            func = SearchFunction.get(operator)
+            inc_sets.append(func(key, operator, arg, index, query, al))
 
         return reduce(lambda x, y: x | y, inc_sets)

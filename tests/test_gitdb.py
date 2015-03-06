@@ -109,7 +109,6 @@ class TestGitDB:
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
 
-    # @pytest.mark.xfail
     def test_searching_complex(self, gdb):
         gdb.insert({'square': True, 'circle': False})
         gdb.insert({'circle': True, 'square': False})
@@ -124,3 +123,25 @@ class TestGitDB:
 
         with pytest.raises(KeyError):
             gdb.find({'triangle': {'this search does not exist': 4}})
+
+    def test_search_numeric(self, gdb):
+        gdb.insert({'name': 'bob', 'age': 42})
+        gdb.insert({'name': 'geoff', 'age': 64})
+        gdb.insert({'name': 'jeremy', 'age': 12})
+        gdb.insert({'name': 'cristoff', 'age': 42})
+
+        assert (gdb.find({'age': {'gt': 60}}) ==
+                [{'name': 'geoff', 'age': 64}])
+
+        assert (gdb.find({'age': {'gt': 'this will not work'}}) == [])
+
+        assert {'name': 'bob', 'age': 42} in gdb.find({'age': {'lt': 60}})
+        assert {'name': 'jeremy', 'age': 12} in gdb.find({'age': {'lt': 60}})
+        assert {'name': 'cristoff', 'age': 42} in gdb.find({'age': {'lt': 60}})
+        assert len(gdb.find({'age': {'lt': 60}})) == 3
+
+        assert len(gdb.find({'age': {'gte': 64}})) == 1
+        assert len(gdb.find({'age': {'lte': 10}})) == 0
+        assert len(gdb.find({'age': {'less-than-equal': 14}})) == 1
+        assert len(gdb.find({'age': {'<=': 12}})) == 1
+        assert len(gdb.find({'age': {'==': 42}})) == 2
