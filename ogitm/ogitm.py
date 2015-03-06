@@ -1,5 +1,4 @@
 from . import fields
-from . import gitdb  # pragma: no flakes
 
 
 def make_property(name, field):
@@ -78,10 +77,18 @@ class Model(metaclass=MetaModel):
                 emsg = "Value {v} failed acceptance check for key {k}"
                 raise ValueError(emsg.format(k=key, v=val))
 
+        self.save()
+
     def save(self):
         if self._id is None:
             self._id = self._db.insert(self._attrs)
         else:
-            pass
+            self._id = self._db.update(self._id, self._attrs)
 
         return self._id
+
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+
+        return self._attrs == other._attrs

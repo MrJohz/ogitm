@@ -134,6 +134,8 @@ class GitDB:
         if not self._transaction_open:
             self.data_tree.save('update ' + doc_name)
 
+        return d_id
+
     def save(self, msg='-'):
         return self.data_tree.save()
 
