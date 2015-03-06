@@ -119,6 +119,9 @@ class GitDB:
         return doc
 
     def find(self, where):
+        return [i[1] for i in self.find_ids(where)]
+
+    def find_ids(self, where):
         all_ids = {int(i[4:]) for i in self.data_tree.items_list()
                    if i.startswith('doc-')}
 
@@ -135,7 +138,14 @@ class GitDB:
 
         doc_ids = reduce(lambda x, y: x & y, id_sets)
 
-        return [self.data_tree['doc-{id}'.format(id=i)] for i in doc_ids]
+        return [(i, self.data_tree['doc-{id}'.format(id=i)]) for i in doc_ids]
+
+    def find_one(self, where):
+        res = self.find(where)
+        if len(res) > 0:
+            return res[0]
+        else:
+            return None
 
     def _find_simple(self, key, val, index):
         vals = json.dumps(val)

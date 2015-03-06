@@ -20,7 +20,7 @@ install:
   - "pip install -r dev-requirements.txt"
 
 script:
-  - "py.test --pep8 --flakes --clearcache --cov ogitm --cov-report term-missing tests ogitm"
+  - "py.test --cov ogitm --cov-report term-missing tests ogitm README.md"
 
 after_success:
   - coveralls

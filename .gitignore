@@ -4,3 +4,4 @@ __pycache__
 *.py,cover
 .coverage
 .cache
+test_readme.py

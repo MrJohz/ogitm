@@ -165,3 +165,13 @@ class TestGitDB:
         assert gdb.find({'bogon': {'eq': 'str'}}) == [{'bogon': 'str'}]
         assert gdb.find({'bogon': {'eq': False}}) == [{'bogon': False}]
         assert gdb.find({'bogon': {'gt': 10000}}) == [{'bogon': 11623}]
+
+    def test_find_one(self, gdb):
+        gdb.insert({'a': 1})
+        gdb.insert({'a': 'b'})
+        gdb.insert({'a': 'c'})
+        gdb.insert({'a': True})
+
+        assert gdb.find_one({'a': True}) == {'a': True}
+        assert gdb.find_one({'a': {'exists': True}}) is not None
+        assert gdb.find_one({'a': 'non-existant'}) is None
