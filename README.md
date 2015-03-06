@@ -40,8 +40,8 @@ test for existence, compare etc.
 
     >>> doc_id = db.insert({'name': 'Bobbie', 'car': True})
     >>> doc_id = db.insert({'name': 'Bertie', 'age': 26, 'car': False})
-    >>> {'name': 'Jimmy', 'age': 45, 'car': False} in db.find({'car': False})
+    >>> {'name': 'Bobbie', 'car': True} in db.find_items({'car': True})
     True
     >>> _ = db.insert({'name': 'Jimmy'})
-    >>> db.find({'car': {'exists': False}}) == [{'name': 'Jimmy'}]
+    >>> db.find_items({'car': {'exists': False}}) == [{'name': 'Jimmy'}]
     True

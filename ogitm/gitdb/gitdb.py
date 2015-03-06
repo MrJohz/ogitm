@@ -107,6 +107,33 @@ class GitDB:
             self.data_tree.save('insert doc-{id}'.format(id=d_id))
         return d_id
 
+    def update(self, d_id, document):
+        doc_name = 'doc-{id}'.format(id=d_id)
+        if doc_name not in self.data_tree:
+            raise ValueError("Cannot update document that doesn't exist")
+
+        old_doc = self.data_tree[doc_name]
+        self.data_tree[doc_name] = document
+
+        # remove old indexes
+        for key, val in old_doc.items():
+            val = json.dumps(val)
+            index_name = 'index-{key}'.format(key=key)
+            index = self.data_tree.get(index_name, {})
+            index.setdefault(val, []).pop(d_id)
+            self.data_tree[index_name] = index
+
+        # insert new indexes
+        for key, val in document.items():
+            val = json.dumps(val)
+            index_name = 'index-{key}'.format(key=key)
+            index = self.data_tree.get(index_name, {})
+            index.setdefault(val, []).append(d_id)
+            self.data_tree[index_name] = index
+
+        if not self._transaction_open:
+            self.data_tree.save('update ' + doc_name)
+
     def save(self, msg='-'):
         return self.data_tree.save()
 
@@ -121,10 +148,13 @@ class GitDB:
 
         return doc
 
-    def find(self, where):
-        return [i[1] for i in self.find_ids(where)]
-
     def find_ids(self, where):
+        return [i[0] for i in self.find(where)]
+
+    def find_items(self, where):
+        return [i[1] for i in self.find(where)]
+
+    def find(self, where):
         all_ids = {int(i[4:]) for i in self.data_tree.items_list()
                    if i.startswith('doc-')}
 

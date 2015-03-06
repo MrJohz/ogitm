@@ -18,6 +18,17 @@ class TestGitDB:
         with pytest.raises(TypeError):
             gdb.get(None)
 
+    def test_update(self, gdb):
+        doc_id = gdb.insert({'one': 'two'})
+        assert gdb.get(doc_id) == {'one': 'two'}
+
+        gdb.update(doc_id, {'one': 'three'})
+        assert gdb.get(doc_id) == {'one': 'three'}
+
+        gdb.update(doc_id, {'seven': 'eight'})
+        assert gdb.get(doc_id) == {'seven': 'eight'}
+        assert gdb.find({'one': {'exists': True}}) == []
+
     def test_multiple_inserts(self, gdb):
         doc1 = gdb.insert({'one': 'two'})
         doc2 = gdb.insert({'three': 'four'})
@@ -99,48 +110,46 @@ class TestGitDB:
                 g1.rollback()
 
     def test_searching_simple(self, gdb):
-        gdb.insert({'square': True, 'circle': False})
+        id_1 = gdb.insert({'square': True, 'circle': False})
         gdb.insert({'circle': True, 'square': False})
-        gdb.insert({'circle': False, 'square': False, 'triangle': True})
+        id_3 = gdb.insert({'circle': False, 'square': False, 'triangle': True})
         assert (gdb.find({'square': True}) ==
-                [{'square': True, 'circle': False}])
+                [(id_1, {'square': True, 'circle': False})])
         assert gdb.find({'triangle': False}) == []
-        assert {'circle': False, 'square': True} in gdb.find({'circle': False})
-        assert ({'circle': False, 'square': False, 'triangle': True}
+        assert ((id_1, {'circle': False, 'square': True})
+                in gdb.find({'circle': False}))
+        assert ((id_3, {'circle': False, 'square': False, 'triangle': True})
                 in gdb.find({'circle': False}))
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
 
     def test_searching_complex(self, gdb):
-        gdb.insert({'square': True, 'circle': False})
-        gdb.insert({'circle': True, 'square': False})
-        gdb.insert({'circle': False, 'square': False, 'triangle': True})
-        assert (gdb.find({'triangle': {'exists': True}}) ==
-                [{'circle': False, 'square': False, 'triangle': True}])
+        id_1 = gdb.insert({'square': True, 'circle': False})
+        id_2 = gdb.insert({'circle': True, 'square': False})
+        id_3 = gdb.insert({'circle': False, 'square': False, 'triangle': True})
+        assert (gdb.find_ids({'triangle': {'exists': True}}) == [id_3])
 
-        assert ({'square': True, 'circle': False}
-                in gdb.find({'triangle': {'exists': False}}))
-        assert ({'circle': True, 'square': False}
-                in gdb.find({'triangle': {'exists': False}}))
+        assert id_1 in gdb.find_ids({'triangle': {'exists': False}})
+        assert id_2 in gdb.find_ids({'triangle': {'exists': False}})
 
         with pytest.raises(KeyError):
             gdb.find({'triangle': {'this search does not exist': 4}})
 
     def test_search_numeric(self, gdb):
-        gdb.insert({'name': 'bob', 'age': 42})
-        gdb.insert({'name': 'geoff', 'age': 64})
-        gdb.insert({'name': 'jeremy', 'age': 12})
-        gdb.insert({'name': 'cristoff', 'age': 42})
+        bob = gdb.insert({'name': 'bob', 'age': 42})
+        geoff = gdb.insert({'name': 'geoff', 'age': 64})
+        jeremy = gdb.insert({'name': 'jeremy', 'age': 12})
+        cristoff = gdb.insert({'name': 'cristoff', 'age': 42})
 
         assert (gdb.find({'age': {'gt': 60}}) ==
-                [{'name': 'geoff', 'age': 64}])
+                [(geoff, {'name': 'geoff', 'age': 64})])
 
         assert (gdb.find({'age': {'gt': 'this will not work'}}) == [])
 
-        assert {'name': 'bob', 'age': 42} in gdb.find({'age': {'lt': 60}})
-        assert {'name': 'jeremy', 'age': 12} in gdb.find({'age': {'lt': 60}})
-        assert {'name': 'cristoff', 'age': 42} in gdb.find({'age': {'lt': 60}})
-        assert len(gdb.find({'age': {'lt': 60}})) == 3
+        assert bob in gdb.find_ids({'age': {'lt': 60}})
+        assert jeremy in gdb.find_ids({'age': {'lt': 60}})
+        assert cristoff in gdb.find_ids({'age': {'lt': 60}})
+        assert len(gdb.find_ids({'age': {'lt': 60}})) == 3
 
         assert len(gdb.find({'age': {'gte': 64}})) == 1
         assert len(gdb.find({'age': {'lte': 10}})) == 0
@@ -148,32 +157,32 @@ class TestGitDB:
         assert len(gdb.find({'age': {'<=': 12}})) == 1
         assert len(gdb.find({'age': {'==': 42}})) == 2
 
-    def test_search_other_types(self, gdb):
-        gdb.insert({'word': 'aardvark'})
-        gdb.insert({'word': 'abacus'})
+    def test_search_other_types(self, gdb):  # pragma: no flakes
+        aard = gdb.insert({'word': 'aardvark'})
+        abac = gdb.insert({'word': 'abacus'})
         gdb.insert({'word': 'xylophone'})
 
-        gdb.insert({'bogon': 11623})
-        gdb.insert({'bogon': False})
-        gdb.insert({'bogon': 'str'})
+        b_int = gdb.insert({'bogon': 11623})
+        b_bol = gdb.insert({'bogon': False})
+        b_str = gdb.insert({'bogon': 'str'})
 
         assert gdb.find({'word': {'gt': 'zylophone'}}) == []
-        assert gdb.find({'word': {'eq': 'abacus'}}) == [{'word': 'abacus'}]
+        assert gdb.find_ids({'word': {'eq': 'abacus'}}) == [abac]
 
-        assert {'word': 'aardvark'} in gdb.find({'word': {'lt': 'xenu'}})
-        assert {'word': 'abacus'} in gdb.find({'word': {'lt': 'xenu'}})
+        assert aard in gdb.find_ids({'word': {'lt': 'xenu'}})
+        assert abac in gdb.find_ids({'word': {'lt': 'xenu'}})
         assert len(gdb.find({'word': {'lt': 'xenu'}})) == 2
 
-        assert gdb.find({'bogon': {'eq': 'str'}}) == [{'bogon': 'str'}]
-        assert gdb.find({'bogon': {'eq': False}}) == [{'bogon': False}]
-        assert gdb.find({'bogon': {'gt': 10000}}) == [{'bogon': 11623}]
+        assert gdb.find_ids({'bogon': {'eq': 'str'}}) == [b_str]
+        assert gdb.find_ids({'bogon': {'eq': False}}) == [b_bol]
+        assert gdb.find_ids({'bogon': {'gt': 10000}}) == [b_int]
 
     def test_find_one(self, gdb):
         gdb.insert({'a': 1})
         gdb.insert({'a': 'b'})
         gdb.insert({'a': 'c'})
-        gdb.insert({'a': True})
+        id_4 = gdb.insert({'a': True})
 
-        assert gdb.find_one({'a': True}) == {'a': True}
+        assert gdb.find_one({'a': True}) == (id_4, {'a': True})
         assert gdb.find_one({'a': {'exists': True}}) is not None
         assert gdb.find_one({'a': 'non-existant'}) is None
