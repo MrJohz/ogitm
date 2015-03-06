@@ -2,6 +2,13 @@ from ogitm.gitdb import treewrapper
 import pygit2
 import pytest
 
+# NOTE: For most operations, TreeWrapper uses two different mechanisms
+# depending on whether it is using an internal working tree (that is, the
+# data has been modified, but the tree hasn't been saved yet), or the latest
+# committed data.  Thus any operations tested here should be tested both with
+# a set of data freshly saved and committed, and with a set of data that has
+# been inserted but not saved.
+
 
 class TestTreeWrapper:
 
@@ -24,6 +31,18 @@ class TestTreeWrapper:
             gittree['name']
         assert gittree.get('name') is None
 
+    def test_saving_data(self, gittree):
+        gittree['doo-dah'] = 'yabadabadoo'
+        gittree.save()
+        gittree.save()
+
+        assert gittree['doo-dah'] == 'yabadabadoo'
+        assert gittree.get('doo-dah') == 'yabadabadoo'
+        del gittree['doo-dah']
+        with pytest.raises(KeyError):
+            gittree['doo-dah']
+        assert gittree.get('doo-dah') is None
+
     def test_clear(self, gittree):
         gittree['bob'] = 'Joe Bloggs'
         assert gittree['bob'] == 'Joe Bloggs'
@@ -40,18 +59,6 @@ class TestTreeWrapper:
         assert 'bob' not in gittree
         with pytest.raises(KeyError):
             gittree['bob']
-
-    def test_saving_data(self, gittree):
-        gittree['doo-dah'] = 'yabadabadoo'
-        gittree.save()
-        gittree.save()
-
-        assert gittree['doo-dah'] == 'yabadabadoo'
-        assert gittree.get('doo-dah') == 'yabadabadoo'
-        del gittree['doo-dah']
-        with pytest.raises(KeyError):
-            gittree['doo-dah']
-        assert gittree.get('doo-dah') is None
 
     def test_contains(self, gittree):
         gittree['brainfart'] = 'boabab'

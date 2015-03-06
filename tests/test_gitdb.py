@@ -145,3 +145,23 @@ class TestGitDB:
         assert len(gdb.find({'age': {'less-than-equal': 14}})) == 1
         assert len(gdb.find({'age': {'<=': 12}})) == 1
         assert len(gdb.find({'age': {'==': 42}})) == 2
+
+    def test_search_other_types(self, gdb):
+        gdb.insert({'word': 'aardvark'})
+        gdb.insert({'word': 'abacus'})
+        gdb.insert({'word': 'xylophone'})
+
+        gdb.insert({'bogon': 11623})
+        gdb.insert({'bogon': False})
+        gdb.insert({'bogon': 'str'})
+
+        assert gdb.find({'word': {'gt': 'zylophone'}}) == []
+        assert gdb.find({'word': {'eq': 'abacus'}}) == [{'word': 'abacus'}]
+
+        assert {'word': 'aardvark'} in gdb.find({'word': {'lt': 'xenu'}})
+        assert {'word': 'abacus'} in gdb.find({'word': {'lt': 'xenu'}})
+        assert len(gdb.find({'word': {'lt': 'xenu'}})) == 2
+
+        assert gdb.find({'bogon': {'eq': 'str'}}) == [{'bogon': 'str'}]
+        assert gdb.find({'bogon': {'eq': False}}) == [{'bogon': False}]
+        assert gdb.find({'bogon': {'gt': 10000}}) == [{'bogon': 11623}]
