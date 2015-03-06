@@ -111,3 +111,5 @@ class TestTreeWrapper:
         gittree['box'] = 'bubblicious'
         gittree['square'] = 'boxifabulous'
         gittree['bubble'] = 'squaretastic'
+        
+        assert set(gittree.items_list()) == {'box', 'square', 'bubble'}
