@@ -50,7 +50,7 @@ class MetaModel(type):
 
     @classmethod
     def get_attributes(cls, instance):
-        return cls.type_attributes[instance.__class__]
+        return cls.type_attributes[type(instance)]
 
 
 class Model(metaclass=MetaModel):
@@ -88,7 +88,7 @@ class Model(metaclass=MetaModel):
         return self._id
 
     def __eq__(self, other):
-        if not isinstance(other, self.__class__):
+        if not isinstance(other, type(self)):
             return False
 
         return self._attrs == other._attrs

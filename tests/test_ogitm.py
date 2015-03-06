@@ -14,6 +14,27 @@ class TestOGitM:
 
         return db, TestModel
 
+    def test_defining_model(self, tmpdir):
+        db = ogitm.gitdb.GitDB(str(tmpdir))
+
+        class MyTest(ogitm.Model, db=db):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer()
+
+            other_fields = "Allowed as well"
+
+        assert MyTest.other_fields == "Allowed as well"
+
+        with pytest.raises(TypeError):
+
+            class MyTest(ogitm.Model, db=db):
+                _name = ogitm.fields.String()
+
+        with pytest.raises(TypeError):
+
+            class MyNewTest(ogitm.Model):
+                pass
+
     def test_instantiation(self, simple_model):
         db, TestModel = simple_model
 
@@ -33,6 +54,21 @@ class TestOGitM:
 
         with pytest.raises(ValueError):
             TestModel(name="note-no-age")
+
+    def test_obj_properties(self, simple_model):
+        db, TestModel = simple_model
+        tm = TestModel(age=4, name="berta")
+        assert tm.name == "berta"
+        assert tm.age == 4
+
+        tm.name = "Berta"
+        assert tm.name == "Berta"
+
+        with pytest.raises(ValueError):
+            tm.age = "bob"
+
+        with pytest.raises(ValueError):
+            tm.name = 32
 
     def test_data_insertion(self, simple_model):
         db, TestModel = simple_model
@@ -85,3 +121,10 @@ class TestOGitM:
         tm3.age = 25
         tm3.name = "Bettie"
         assert tm3 == tm2
+
+        class OtherModel(ogitm.Model, db=db):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer(nullable=False)
+
+        om = OtherModel(age=25, name="Bettie")
+        assert tm3 != om

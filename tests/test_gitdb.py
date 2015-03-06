@@ -29,6 +29,9 @@ class TestGitDB:
         assert gdb.get(doc_id) == {'seven': 'eight'}
         assert gdb.find({'one': {'exists': True}}) == []
 
+        with pytest.raises(ValueError):
+            gdb.update(312991, {'one': 'three'})
+
     def test_multiple_inserts(self, gdb):
         doc1 = gdb.insert({'one': 'two'})
         doc2 = gdb.insert({'three': 'four'})
