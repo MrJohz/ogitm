@@ -12,9 +12,11 @@ class TestGitDB:
         gdb = gitdb.GitDB(str(tmpdir))
         assert gdb
 
-    def test_insertion_removal(self, gdb):
+    def test_insertion(self, gdb):
         doc_id = gdb.insert({'one': 'two'})
         assert gdb.get(doc_id) == {'one': 'two'}
+        with pytest.raises(TypeError):
+            gdb.get(None)
 
     def test_multiple_inserts(self, gdb):
         doc1 = gdb.insert({'one': 'two'})

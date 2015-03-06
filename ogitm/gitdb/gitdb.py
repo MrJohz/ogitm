@@ -111,6 +111,9 @@ class GitDB:
         return self.data_tree.save()
 
     def get(self, doc_id):
+        if not isinstance(doc_id, int):
+            raise TypeError("id must be an integer")
+
         doc = self.data_tree.get('doc-{id}'.format(id=doc_id))
         if doc is None:
             err = "No such document under id {id}".format(id=doc_id)
