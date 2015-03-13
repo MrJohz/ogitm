@@ -34,6 +34,10 @@ class MetaModel(type):
                 if key.startswith("_"):
                     m = "Private attributes not allowed as model fields: {a}"
                     raise TypeError(m.format(a=key))
+                elif key == "id":
+                    m = ("'id' attribute not allowed as a field, will be "
+                         "internally defined")
+                    raise TypeError(m)
                 attrs[key] = val
                 properties[key] = make_property(key, val)
 
@@ -57,7 +61,7 @@ class Model(metaclass=MetaModel):
 
     def __init__(self, **kwargs):
         self._attrs = {}
-        self._id = None
+        self.id = None
 
         to_set = {}
         attrs = MetaModel.get_attributes(self)
@@ -80,12 +84,12 @@ class Model(metaclass=MetaModel):
         self.save()
 
     def save(self):
-        if self._id is None:
-            self._id = self._db.insert(self._attrs)
+        if self.id is None:
+            self.id = self._db.insert(self._attrs)
         else:
-            self._id = self._db.update(self._id, self._attrs)
+            self.id = self._db.update(self.id, self._attrs)
 
-        return self._id
+        return self.id
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):

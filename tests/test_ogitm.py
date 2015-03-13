@@ -27,12 +27,17 @@ class TestOGitM:
 
         with pytest.raises(TypeError):
 
-            class MyTest(ogitm.Model, db=db):
+            class _0(ogitm.Model, db=db):
+                id = ogitm.fields.String()
+
+        with pytest.raises(TypeError):
+
+            class _1(ogitm.Model, db=db):
                 _name = ogitm.fields.String()
 
         with pytest.raises(TypeError):
 
-            class MyNewTest(ogitm.Model):
+            class _2(ogitm.Model):
                 pass
 
     def test_instantiation(self, simple_model):
