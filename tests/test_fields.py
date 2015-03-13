@@ -12,12 +12,6 @@ class TestBaseField:
         with pytest.raises(TypeError):
             fields.String(unrecognised_filed=False)
 
-#    def test_wrong_coercion(self):
-#        sf = fields.String(coerce=int)
-#        assert sf.check("Hello")  # TODO: is this right?
-#        assert not sf.check("522")
-#        assert not sf.check(52)
-
     def test_nullable(self):
         sf = fields.String(nullable=False)
         assert sf.check("Not none")

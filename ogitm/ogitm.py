@@ -12,7 +12,7 @@ def make_property(name, field):
 
     def setter(self, val):
         if not field.check(val):
-            m = "Unallowed value {val} failed field checks"
+            m = "Disallowed value {val} failed field checks"
             raise ValueError(m.format(val=val))
 
         self._attrs[name] = val
@@ -23,6 +23,16 @@ def make_property(name, field):
     return property(fget=getter, fset=setter)
 
 
+def make_init(initialiser):
+
+    def __init__(self, *args, **kwargs):
+        initialiser(self, *args, **kwargs)
+        if not hasattr(self, "id") or self.id is None:
+            raise TypeError("This class has not been initialised")
+
+    return __init__
+
+
 class MetaModel(type):
 
     type_attributes = {}
@@ -30,8 +40,8 @@ class MetaModel(type):
     def __new__(meta, name, bases, dct, db=None):
         attrs = {}
         properties = {}
-        for key, val in dct.items():
-            if isinstance(val, fields.BaseField):
+        for key, field in dct.items():
+            if isinstance(field, fields.BaseField):
                 if key.startswith("_"):
                     m = "Private attributes not allowed as model fields: {a}"
                     raise TypeError(m.format(a=key))
@@ -39,8 +49,10 @@ class MetaModel(type):
                     m = ("'id' attribute not allowed as a field, will be "
                          "internally defined")
                     raise TypeError(m)
-                attrs[key] = val
-                properties[key] = make_property(key, val)
+                attrs[key] = field
+                properties[key] = make_property(key, field)
+            elif key == "__init__" and callable(field):
+                properties[key] = make_init(field)
 
         dct.update(properties)
 
@@ -54,7 +66,6 @@ class MetaModel(type):
 
         if isinstance(db, str):
             db = gitdb.GitDB(db)
-
         cls._db = db
 
     @classmethod

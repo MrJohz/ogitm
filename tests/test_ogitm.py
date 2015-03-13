@@ -17,32 +17,58 @@ class TestOGitM:
     def test_defining_model(self, tmpdir):
         db = ogitm.gitdb.GitDB(str(tmpdir))
 
-        class MyTest(ogitm.Model, db=db):
+        class TestComplexDeclr(ogitm.Model, db=db):
             name = ogitm.fields.String()
             age = ogitm.fields.Integer()
+            _private_non_field = "hello"
 
             other_fields = "Allowed as well"
 
-        class MyOtherTest(ogitm.Model, db=str(tmpdir)):
+            def __init__(self, var):
+                self.var = var
+                super().__init__(name="Jeremy", age=5)
+
+            def __len__(self):
+                return 4
+
+            def get_name(self):
+                return self.name
+
+        class TestStringDB(ogitm.Model, db=str(tmpdir)):
             name = ogitm.fields.String()
             age = ogitm.fields.Integer()
 
-        assert MyTest.other_fields == "Allowed as well"
+        assert TestComplexDeclr.other_fields == "Allowed as well"
+
+        myt = TestComplexDeclr("hello")
+        assert myt.var == "hello"
+        assert len(myt) == 4
+        assert myt.get_name() == myt.name
+        assert myt.get_name() == "Jeremy"
 
         with pytest.raises(TypeError):
 
-            class _0(ogitm.Model, db=db):
+            class OverwritingID(ogitm.Model, db=db):
                 id = ogitm.fields.String()
 
         with pytest.raises(TypeError):
 
-            class _1(ogitm.Model, db=db):
+            class UnderscoredField(ogitm.Model, db=db):
                 _name = ogitm.fields.String()
 
         with pytest.raises(TypeError):
 
-            class _2(ogitm.Model):
+            class NoDatabase(ogitm.Model):
                 pass
+
+        class OverrideInitialisation(ogitm.Model, db=db):
+            name = ogitm.fields.String()
+
+            def __init__(self):
+                pass  # Should call super().__init__(self, **initial_vars)
+
+        with pytest.raises(TypeError):
+            OverrideInitialisation()
 
     def test_instantiation(self, simple_model):
         db, TestModel = simple_model

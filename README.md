@@ -1,10 +1,9 @@
 # OGitM
 
+**Because doing stupid things with git is surprisingly fun.**
+
 [![Travis](https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square)](https://travis-ci.org/MrJohz/ogitm)
 [![Coveralls](https://img.shields.io/coveralls/MrJohz/ogitm.svg?style=flat-square)](https://coveralls.io/r/MrJohz/ogitm)
-
-
-**Because doing stupid things with git is surprisingly fun.**
 
 OGitM is an ORM, but where the relational database that underlies the entire
 mapping has been replaced by an awful attempt at replicating a stupidly basic
@@ -13,12 +12,14 @@ anyone ever.  Please, for the good of humanity.
 
 [git]: <http://git-scm.com/>
 
+
 ## Um... What?
 
 Git is useful, because it stores both data, and the history of that data.
 This might be a useful property for a database to have.  Writing a whole
 database based on git is boring, I should try writing an ORM to wrap around
 it.  Well, it wouldn't so much be an ORM, more an O... git M?
+
 
 ## How do I use this?
 
@@ -38,7 +39,7 @@ Import the module, declare your model, and go!
     >>> instance.age = -5
     Traceback (most recent call last):
         ...
-    ValueError: Unallowed value -5 ...
+    ValueError: Disallowed value -5 ...
 
 
 ## Can I get at the underlying database?
@@ -64,7 +65,7 @@ test for existence, compare etc.
     >>> doc_id = db.insert({'name': 'Bertie', 'age': 26, 'car': False})
     >>> {'name': 'Bobbie', 'car': True} in db.find_items({'car': True})
     True
-    >>> _ = db.insert({'name': 'Jimmy'})
+    >>> doc_id = db.insert({'name': 'Jimmy'})
     >>> db.find_items({'car': {'exists': False}}) == [{'name': 'Jimmy'}]
     True
 
@@ -79,7 +80,7 @@ test for existence, compare etc.
     * Should have the setup for it fairly easily
     * Map individual models onto individual tables
 - Relationships?
-    * U fucking wot m8?
+    * U f*cking wot m8?
 - Python 2
 - Better way of accessing git
     * May be needed for Py2, is needed for pypy, will make it easier
