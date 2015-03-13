@@ -67,3 +67,21 @@ test for existence, compare etc.
     >>> _ = db.insert({'name': 'Jimmy'})
     >>> db.find_items({'car': {'exists': False}}) == [{'name': 'Jimmy'}]
     True
+
+
+## Todo
+
+- Documentation
+    * docstrings etc
+    * formal manual
+- PyPI, documentation hosting
+- Individual tables
+    * Should have the setup for it fairly easily
+    * Map individual models onto individual tables
+- Relationships?
+    * U fucking wot m8?
+- Python 2
+- Better way of accessing git
+    * May be needed for Py2, is needed for pypy, will make it easier
+      for anyone to install it from PyPI
+- Begin versioning sometime fairly soon
