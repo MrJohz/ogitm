@@ -4,6 +4,9 @@ import numbers
 
 from .compat import SimpleNamespace
 
+__all__ = ['BaseField', 'String', 'Number', 'Float', 'Integer',
+           'Boolean', 'coerce_boolean', 'Choice']
+
 ALWAYS_SUCCESSFUL_RE = SimpleNamespace()
 ALWAYS_SUCCESSFUL_RE.search = lambda *args, **kwargs: True
 
@@ -17,19 +20,18 @@ class BaseField(metaclass=abc.ABCMeta):
     Cannot be instantiated, but should be inherited to provide all the
     useful information that a field might need.
 
-    Arguments:
-
-      default (any) -- A default value to provide if the input is ever
+    :param any default:  A default value to provide if the input is ever
         None.  If not provided, and nullable is False, a field will
         not accept None as an argument.
 
-      nullable (bool) -- True if this field can be None/null, False
+    :param bool nullable:  True if this field can be None/null, False
         otherwise.  Defaults to True.
 
-      coerce (func x: x) -- A function that can coerce any input into
+    :param coerce:  A function that can coerce any input into
         input of a valid type.  If it cannot coerce, it should either
         return "False" or raise a ValueError.  Defaults to a no-op.
-        e.g. `coerce=int` would convert values to int where possible.
+
+        Example:  ``coerce=int`` would convert values to int where possible.
     """
 
     def __init__(self, **kwargs):
@@ -53,12 +55,10 @@ class BaseField(metaclass=abc.ABCMeta):
         own checking in future, and so should probably be checked before
         any overriden method.
 
-        Arguments:
+        :param any val: Value to check
 
-          val (any) -- Value to check.
-
-        Returns (bool) -- Whether that value is allowed by the parameters
-            given to this field.
+        :return: Whether that value is allowed by the parameters given to this
+            field.
         """
         return True
 
@@ -71,11 +71,9 @@ class BaseField(metaclass=abc.ABCMeta):
         unchanged.  (`type_check` should therefore always be used to
         check the type of a coerced value.)
 
-        Arguments:
+        :param any val: Value to coerce
 
-          val (any) -- Value to coerce
-
-        Returns (any) -- Coerced value
+        :return: Coerced value
         """
         try:
             return self.coerce_func(val)
@@ -86,17 +84,15 @@ class BaseField(metaclass=abc.ABCMeta):
         """Check if value is of a certain type (using nullability).
 
         If this field instance can be nulled, checks if the val is
-        either of type `typ` or of the None type.  Otherwise, it just
-        checks if the val is of type `typ`.  Note that `typ` is passed
-        straight through to `isinstance`, so it can be any value allowed
-        by the second parameter of `isinstance`.
+        either of type ``typ`` or of the None type.  Otherwise, it just
+        checks if the val is of type ``typ``.  Note that ``typ`` is passed
+        straight through to ``isinstance``, so it can be any value allowed
+        by the second parameter of ``isinstance``.
 
-        Arguments:
+        :param any val:  Value to check
+        :param typ: Type(s) to check against
 
-          val (any) -- Value to check
-          typ (type | Tuple[type]) -- Type(s) to check against
-
-        Returns (bool) -- Whether val is of type typ.
+        :return: Whether val is of type ``typ``.
         """
         if typ is None:  # just check nullability
             return self._accept_none or val is not None
@@ -108,6 +104,13 @@ class BaseField(metaclass=abc.ABCMeta):
 
 
 class String(BaseField):
+    """A field representing string types.
+
+    :param regex: Regular expression that this string must match.
+        If not present, any string will match.  Can be either a regular
+        expression object, or a string.
+    :type regex: string or regex
+    """
 
     def __init__(self, **kwargs):
         regex = kwargs.pop('regex', None)
@@ -135,7 +138,13 @@ class String(BaseField):
 
 
 class Number(BaseField):
-    # NOTE: more specifically, *real* numbers
+    """A field representing real numeric types.
+
+    :param numeric min: The minimum (inclusive) value that this field can
+        contain.  If not specified, there is no minimum.
+    :param numeric max: The maximum (inclusive) value that this field can
+        contain.  If not specified, there is no maximum.
+    """
 
     def __init__(self, **kwargs):
         self.min = kwargs.pop('min', None)
@@ -160,6 +169,11 @@ class Number(BaseField):
 
 
 class Integer(Number):
+    """A field representing integers.
+
+    :param numeric min: See :py:class:`.Number`
+    :param numeric max: See :py:class:`.Number`
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -178,6 +192,11 @@ class Integer(Number):
 
 
 class Float(Number):
+    """A field representing floating point numbers.
+
+    :param numeric min: See :py:class:`.Number`
+    :param numeric max: See :py:class:`.Number`
+    """
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -198,6 +217,19 @@ BOOLEAN_FALSE = ("no", "n", "false", "f", "off")
 
 
 def coerce_boolean(val):
+    """A useful function for coercing various types to boolean.
+
+    Unlike the usual Python :py:func:`bool` function which simply tests if a
+    value is empty, this matches boolean ``True``, strings in the set
+    ``{'yes', 'y', 'true', 't', 'on'}`` and the integer ``1`` for ``True``,
+    or boolean ``False``, strings in the set
+    ``{'no', 'n', 'false', 'f', 'off'}`` and the integer ``0`` for ``False``.
+
+    This is done in a case-insensitive manner.  If the value is a string not in
+    the described sets, a number that doesn't equal ``1`` or ``0``, or any
+    other type (excepting :py:class:`boolean` of course), this function will
+    raise :py:class:`ValueError`.
+    """
     if isinstance(val, str):
         if val.lower() in BOOLEAN_TRUE:
             return True
@@ -214,6 +246,10 @@ def coerce_boolean(val):
 
 
 class Boolean(BaseField):
+    """A field representing boolean values
+
+    See :py:func:`.coerce_boolean` for a useful coercion function for this
+    field."""
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
@@ -232,6 +268,11 @@ class Boolean(BaseField):
 
 
 class Choice(BaseField):
+    """A field representing a single item from a set of items.
+
+    :param collection choices: A required collection of items.  The check
+        method will then ensure that the value must be in this collection.
+    """
 
     def __init__(self, choices=None, **kwargs):
         if choices is None:

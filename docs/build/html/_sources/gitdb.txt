@@ -1,0 +1,6 @@
+API Docs: GitDB
+===============
+
+.. automodule:: ogitm.gitdb.gitdb
+    :members:
+    :undoc-members:
