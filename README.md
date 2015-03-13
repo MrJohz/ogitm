@@ -22,13 +22,35 @@ it.  Well, it wouldn't so much be an ORM, more an O... git M?
 
 ## How do I use this?
 
-Currently the only part that's working is the gitdb module, which provides
-direct access to a document-based database.  Initialise it with a directory
-that it can use as a git bare repository, and start inserting and getting.
+Import the module, declare your model, and go!
 
-    >>> import tempfile; db_directory = tempfile.TemporaryDirectory().name
+    >>> import tempfile; db_directory = tempfile.TemporaryDirectory()
+    >>>
+    >>> import ogitm
+    >>> class MyModel(ogitm.Model, db=db_directory.name):
+    ...     name = ogitm.fields.String()
+    ...     age = ogitm.fields.Integer(min=0)
+    >>>
+    >>> instance = MyModel(name="Bob", age=172)
+    >>> instance_id = instance.save()
+    >>> MyModel.find(name="Bob", age=172).first() == instance
+    True
+    >>> instance.age = -5
+    Traceback (most recent call last):
+        ...
+    ValueError: Unallowed value -5 ...
+
+
+## Can I get at the underlying database?
+
+Yes.  Meet the gitdb module, which provides direct access to a document-based
+database.  Initialise it with a directory that it can use as a git bare
+repository, and start inserting and getting.
+
+    >>> import tempfile; db_directory = tempfile.TemporaryDirectory()
+    >>>
     >>> from ogitm import gitdb
-    >>> db = gitdb.GitDB(db_directory)
+    >>> db = gitdb.GitDB(db_directory.name)
     >>> doc_id = db.insert({'name': 'Jimmy', 'age': 45, 'car': False})
     >>> db.get(doc_id) == {'name': 'Jimmy', 'age': 45, 'car': False}
     True

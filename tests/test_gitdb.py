@@ -189,3 +189,12 @@ class TestGitDB:
         assert gdb.find_one({'a': True}) == (id_4, {'a': True})
         assert gdb.find_one({'a': {'exists': True}}) is not None
         assert gdb.find_one({'a': 'non-existant'}) is None
+
+    def test_find_items(self, gdb):
+        gdb.insert({'a': 1})
+        gdb.insert({'a': 'b'})
+        gdb.insert({'a': 'c'})
+
+        assert gdb.find_items({'a': 1}) == [{'a': 1}]
+        assert len(gdb.find_items({'a': {'exists': True}})) == 3
+        assert gdb.find_items({'a': 'non-existant'}) == []

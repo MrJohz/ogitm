@@ -23,6 +23,10 @@ class TestOGitM:
 
             other_fields = "Allowed as well"
 
+        class MyOtherTest(ogitm.Model, db=str(tmpdir)):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer()
+
         assert MyTest.other_fields == "Allowed as well"
 
         with pytest.raises(TypeError):
@@ -133,3 +137,31 @@ class TestOGitM:
 
         om = OtherModel(age=25, name="Bettie")
         assert tm3 != om
+
+    def test_finding(self, simple_model):
+        db, TestModel = simple_model
+        tm1 = TestModel(age=25, name="Bettie")
+        tm2 = TestModel(age=19, name="Brian")
+        TestModel(age=19, name="Bettie")
+
+        result = TestModel.find(age=25)
+        assert len(result) == 1
+        assert result.first() == tm1
+        assert result.all() == [tm1]
+
+        with pytest.raises(TypeError):
+            TestModel.find(not_an_attribute=500)
+
+        result = TestModel.find(age=19)
+        assert len(result) == 2
+
+        new_result = result.find(name="Brian")
+        assert new_result is result
+        assert len(result) == 1
+        assert result.first() == tm2
+        assert result.all() == [tm2]
+
+        assert len(TestModel.find(age={"exists": True})) == 3
+        assert len(TestModel.find(age=1000)) == 0
+
+        assert TestModel.find(age=1000).first() is None
