@@ -67,3 +67,34 @@ def comparison(key, op, arg, index, query, all):
             continue
 
     return set(resp)
+
+
+# TODO: expand this to other string operators?
+@SearchFunction.add('startswith')
+@SearchFunction.add('endswith')
+@SearchFunction.add('contains')
+@SearchFunction.add('isalnum')
+@SearchFunction.add('isalpha')
+@SearchFunction.add('isdecimal')
+@SearchFunction.add('isdigit')
+@SearchFunction.add('isidentifier')
+@SearchFunction.add('islower')
+@SearchFunction.add('isnumeric')
+@SearchFunction.add('isprintable')
+@SearchFunction.add('isspace')
+@SearchFunction.add('istitle')
+@SearchFunction.add('isupper')
+def startswith(key, op, arg, index, query, all):
+    resp = []
+    for value in index:
+        val = json.loads(value)
+        try:
+            if op == 'contains':
+                if arg in val:
+                    resp.extend(index[value])
+            elif getattr(val, op)(arg):
+                resp.extend(index[value])
+        except (ValueError, TypeError, AttributeError):
+            continue
+
+    return set(resp)

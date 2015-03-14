@@ -126,60 +126,6 @@ class TestGitDB:
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
 
-    def test_searching_complex(self, gdb):
-        id_1 = gdb.insert({'square': True, 'circle': False})
-        id_2 = gdb.insert({'circle': True, 'square': False})
-        id_3 = gdb.insert({'circle': False, 'square': False, 'triangle': True})
-        assert (gdb.find_ids({'triangle': {'exists': True}}) == [id_3])
-
-        assert id_1 in gdb.find_ids({'triangle': {'exists': False}})
-        assert id_2 in gdb.find_ids({'triangle': {'exists': False}})
-
-        with pytest.raises(KeyError):
-            gdb.find({'triangle': {'this search does not exist': 4}})
-
-    def test_search_numeric(self, gdb):
-        bob = gdb.insert({'name': 'bob', 'age': 42})
-        geoff = gdb.insert({'name': 'geoff', 'age': 64})
-        jeremy = gdb.insert({'name': 'jeremy', 'age': 12})
-        cristoff = gdb.insert({'name': 'cristoff', 'age': 42})
-
-        assert (gdb.find({'age': {'gt': 60}}) ==
-                [(geoff, {'name': 'geoff', 'age': 64})])
-
-        assert (gdb.find({'age': {'gt': 'this will not work'}}) == [])
-
-        assert bob in gdb.find_ids({'age': {'lt': 60}})
-        assert jeremy in gdb.find_ids({'age': {'lt': 60}})
-        assert cristoff in gdb.find_ids({'age': {'lt': 60}})
-        assert len(gdb.find_ids({'age': {'lt': 60}})) == 3
-
-        assert len(gdb.find({'age': {'gte': 64}})) == 1
-        assert len(gdb.find({'age': {'lte': 10}})) == 0
-        assert len(gdb.find({'age': {'less-than-equal': 14}})) == 1
-        assert len(gdb.find({'age': {'<=': 12}})) == 1
-        assert len(gdb.find({'age': {'==': 42}})) == 2
-
-    def test_search_other_types(self, gdb):  # pragma: no flakes
-        aard = gdb.insert({'word': 'aardvark'})
-        abac = gdb.insert({'word': 'abacus'})
-        gdb.insert({'word': 'xylophone'})
-
-        b_int = gdb.insert({'bogon': 11623})
-        b_bol = gdb.insert({'bogon': False})
-        b_str = gdb.insert({'bogon': 'str'})
-
-        assert gdb.find({'word': {'gt': 'zylophone'}}) == []
-        assert gdb.find_ids({'word': {'eq': 'abacus'}}) == [abac]
-
-        assert aard in gdb.find_ids({'word': {'lt': 'xenu'}})
-        assert abac in gdb.find_ids({'word': {'lt': 'xenu'}})
-        assert len(gdb.find({'word': {'lt': 'xenu'}})) == 2
-
-        assert gdb.find_ids({'bogon': {'eq': 'str'}}) == [b_str]
-        assert gdb.find_ids({'bogon': {'eq': False}}) == [b_bol]
-        assert gdb.find_ids({'bogon': {'gt': 10000}}) == [b_int]
-
     def test_find_one(self, gdb):
         gdb.insert({'a': 1})
         gdb.insert({'a': 'b'})
@@ -198,3 +144,60 @@ class TestGitDB:
         assert gdb.find_items({'a': 1}) == [{'a': 1}]
         assert len(gdb.find_items({'a': {'exists': True}})) == 3
         assert gdb.find_items({'a': 'non-existant'}) == []
+
+
+class TestSearchFunctions:
+
+    @pytest.fixture
+    def gdb(self, tmpdir):
+        g = gitdb.GitDB(str(tmpdir))
+        g.insert({'int': -42})
+        g.insert({'int': 1})
+        g.insert({'int': 12})
+        g.insert({'int': 123})
+        g.insert({'str': 'hello'})
+        g.insert({'str': 'goodbye'})
+        g.insert({'bool': False})
+        g.insert({'bool': True})
+        g.insert({'str': 'for-bool', 'bool': True})
+        return g
+
+    def test_exists(self, gdb):
+        assert len(gdb.find_items({'int': {'exists': True}})) == 4
+        assert len(gdb.find_items({'int': {'exists': False}})) == 5
+        assert len(gdb.find_items({
+            'bool': {'exists': True},
+            'str': {'exists': False}
+            })) == 2
+        assert gdb.find_items({
+            'bool': {'exists': True},
+            'str': 'for-bool'
+            }) == [{'str': 'for-bool', 'bool': True}]
+
+    def test_operators(self, gdb):
+        assert gdb.find_items({'int': {'gt': 14}}) == [{'int': 123}]
+        assert len(gdb.find_items({'int': {'lt': 4}})) == 2
+        assert len(gdb.find_items({'int': {'gte': 124}})) == 0
+        assert len(gdb.find_items({'int': {'gte': 123}})) == 1
+        assert len(gdb.find_items({'int': {'gte': 122}})) == 1
+        assert len(gdb.find_items({'int': {'lte': 122}})) == 3
+
+        assert len(gdb.find_items({'str': {'lt': 'h'}})) == 2
+        assert len(gdb.find_items({'str': {'gte': 'f'}})) == 3
+
+        assert len(gdb.find_items({'bool': {'eq': False}})) == 1
+        assert len(gdb.find_items({'bool': {'gt': 'hello'}})) == 0
+
+    def test_string_funcs(self, gdb):
+        assert gdb.find_items({'str': {'endswith': 'ye'}}) == \
+            [{'str': 'goodbye'}]
+        assert gdb.find_items({'str': {'startswith': 'h'}}) == \
+            [{'str': 'hello'}]
+        assert gdb.find_items({'int': {'startswith': 3}}) == \
+            []
+        assert gdb.find_items({'str': {'contains': 'll'}}) == \
+            [{'str': 'hello'}]
+
+    def test_nonexistent_key(self, gdb):
+        with pytest.raises(KeyError):
+            gdb.find({'str': {'this search does not exist': 4}})

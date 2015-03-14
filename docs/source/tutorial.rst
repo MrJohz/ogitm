@@ -12,7 +12,7 @@ Starting with OGitM is usually as simple as writing out the model declaration.
     ...
     ...     name = ogitm.fields.String()
     ...     age = ogitm.fields.Integer(min=0)
-    ...     hobby = ogitm.fields.Choice(["football", "cricket", "knitting"])
+    ...     hobby = ogitm.fields.Choice(["football", "karate", "knitting"])
 
 Note that the db parameter is mandatory - it specifies the place that the git
 repository will be stored.  Currently, this system uses bare repositories.
@@ -62,4 +62,24 @@ raising errors all over the place.
         ...
     ValueError: ...
 
-You can also do especially clever things
+More useful than just storing data is being able to retrieve it later.  The
+easiest way to do that is by searching for it.
+
+.. code-block:: python3
+
+    >>> Person.find(name="bob").first() == bob
+    True
+    >>> Person.find(age=19).all()  # No people aged 19
+    []
+    >>> Person.find(hobby="knitting").all() == [bob, geoff]
+    True
+
+Note that this also works for more complex queries.  We can also chain queries
+together.
+
+.. code-block:: python3
+
+    >>> len(Person.find(age={'gt': 2}))  # Matches all current documents
+    3
+    >>> len(Person.find(age={'gt': 2}).find(hobby={'startswith': "k"}))
+    2
