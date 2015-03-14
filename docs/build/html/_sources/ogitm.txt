@@ -1,6 +1,0 @@
-API Docs: OGitM
-===============
-
-.. automodule:: ogitm.ogitm
-    :members:
-    :undoc-members:

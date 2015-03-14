@@ -1,8 +1,0 @@
-Undocumented Python objects
-===========================
-ogitm
------
-Functions:
- * make_init
- * make_property
-
