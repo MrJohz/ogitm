@@ -3,15 +3,17 @@ OGitM
 
 **Because doing stupid things with git is surprisingly fun.**
 
-[![Travis](https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square)](https://travis-ci.org/MrJohz/ogitm)
-[![Coveralls](https://img.shields.io/coveralls/MrJohz/ogitm.svg?style=flat-square)](https://coveralls.io/r/MrJohz/ogitm)
+.. image:: https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square
+    :target: https://travis-ci.org/MrJohz/ogitm
+.. image:: https://img.shields.io/coveralls/MrJohz/ogitm.svg?style=flat-square
+    :target: https://coveralls.io/r/MrJohz/ogitm
 
 OGitM is an ORM, but where the relational database that underlies the entire
 mapping has been replaced by an awful attempt at replicating a stupidly basic
-key-value document store in [git][].  This software should never be used by
+key-value document store in git_.  This software should never be used by
 anyone ever.  Please, for the good of humanity.
 
-[git]: <http://git-scm.com/>
+.. _git: http://git-scm.com/
 
 
 Um... What?
@@ -83,17 +85,11 @@ test for existence, compare etc.
 Todo
 ----
 
-- Documentation
-    * docstrings etc
-    * formal manual
+- Documentation.  (docstrings & manual)
 - PyPI, documentation hosting
-- Individual tables
-    * Should have the setup for it fairly easily
-    * Map individual models onto individual tables
-- Relationships?
-    * U f*cking wot m8?
+- Individual tables (map models onto tables)
+- Relationships? (U f*cking wot m8?)
 - Python 2
-- Better way of accessing git
-    * May be needed for Py2, is needed for pypy, will make it easier
-      for anyone to install it from PyPI
+- Better way of accessing git (May be needed for Py2, is needed for pypy, will
+  make it easier for anyone to install it from PyPI) (See Dulwich)
 - Begin versioning sometime fairly soon
