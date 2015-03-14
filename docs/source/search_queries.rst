@@ -55,13 +55,28 @@ values of ``a`` such that ``a > b``.
     3
 
     >>> # Note that this also works for any
-    >>> # other type with a partial ordering
+    >>> # other type with a total ordering
 
     >>> len(MyModel.find(name={'lt': 'Bf'}))
     2
     >>> # 'eq' will work for any two equivalent items
     >>> MyModel.find(name={'eq': 'Bert'}) == MyModel.find(name='Bert')
     True
+
+
+String Checks
+-------------
+
+String types can be checked using the various :py:meth:`~str.is*` string
+methods, as well as :py:meth:`~str.startswith` and :py:meth:`~str.endswith`.
+These are hardcoded, but delegate to the string's natural methods.
+
+.. code-block:: python3
+
+    >>> len(MyModel.find(name={'startswith': 'B'}))
+    4
+    >>> len(MyModel.find(name={'isalpha': True}))
+    4
 
 
 Existence

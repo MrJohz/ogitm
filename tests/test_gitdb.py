@@ -197,6 +197,8 @@ class TestSearchFunctions:
             []
         assert gdb.find_items({'str': {'contains': 'll'}}) == \
             [{'str': 'hello'}]
+        assert len(gdb.find_items({'str': {'isalpha': True}})) == 2
+        assert len(gdb.find_items({'str': {'isalpha': False}})) == 1
 
     def test_nonexistent_key(self, gdb):
         with pytest.raises(KeyError):

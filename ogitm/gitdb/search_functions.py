@@ -95,6 +95,9 @@ def startswith(key, op, arg, index, query, all):
             if op == 'contains':
                 if arg in val:
                     resp.extend(index[value])
+            elif op.startswith('is'):
+                if getattr(val, op)() == arg:
+                    resp.extend(index[value])
             elif getattr(val, op)(arg):
                 resp.extend(index[value])
         except (ValueError, TypeError, AttributeError):
