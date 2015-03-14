@@ -191,3 +191,8 @@ class TestOGitM:
         assert len(TestModel.find(age=1000)) == 0
 
         assert TestModel.find(age=1000).first() is None
+
+        # Ensures that result sets equal each other if the
+        # contents are the same.
+        assert TestModel.find(name={'eq': 'Bettie'}) == \
+            TestModel.find(name='Bettie')

@@ -9,3 +9,4 @@ Contents:
    ogitm
    fields
    gitdb
+   search_functions

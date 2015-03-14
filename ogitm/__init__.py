@@ -222,6 +222,9 @@ class ReturnSet:
     def __len__(self):
         return len(self.ids)
 
+    def __eq__(self, other):
+        return hasattr(other, 'ids') and self.ids == other.ids
+
     def find(self, **kwargs):
         """Refine the terms of the original search
 

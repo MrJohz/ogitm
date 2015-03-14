@@ -13,6 +13,7 @@ Contents:
 
    installation
    tutorial
+   search_queries
    apidocs/api_docs
 
 

@@ -1,6 +1,9 @@
 import json
 
 
+__all__ = ['SearchFunction']
+
+
 class SearchFunction:
 
     funcs = {}
