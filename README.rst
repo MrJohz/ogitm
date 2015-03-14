@@ -1,4 +1,5 @@
-# OGitM
+OGitM
+=====
 
 **Because doing stupid things with git is surprisingly fun.**
 
@@ -13,7 +14,8 @@ anyone ever.  Please, for the good of humanity.
 [git]: <http://git-scm.com/>
 
 
-## Um... What?
+Um... What?
+-----------
 
 Git is useful, because it stores both data, and the history of that data.
 This might be a useful property for a database to have.  Writing a whole
@@ -21,9 +23,12 @@ database based on git is boring, I should try writing an ORM to wrap around
 it.  Well, it wouldn't so much be an ORM, more an O... git M?
 
 
-## How do I use this?
+How do I use this?
+---------------------
 
 Import the module, declare your model, and go!
+
+.. code-block:: pycon
 
     >>> import tempfile; db_directory = tempfile.TemporaryDirectory()
     >>>
@@ -42,11 +47,14 @@ Import the module, declare your model, and go!
     ValueError: Disallowed value -5 ...
 
 
-## Can I get at the underlying database?
+Can I get at the underlying database?
+-------------------------------------
 
 Yes.  Meet the gitdb module, which provides direct access to a document-based
 database.  Initialise it with a directory that it can use as a git bare
 repository, and start inserting and getting.
+
+.. code-block:: pycon
 
     >>> import tempfile; db_directory = tempfile.TemporaryDirectory()
     >>>
@@ -61,6 +69,8 @@ queries accept simple scalar arguments, which return all documents which have
 the same values as the query, and more complex dictionary arguments which can
 test for existence, compare etc.
 
+.. code-block:: pycon
+
     >>> doc_id = db.insert({'name': 'Bobbie', 'car': True})
     >>> doc_id = db.insert({'name': 'Bertie', 'age': 26, 'car': False})
     >>> {'name': 'Bobbie', 'car': True} in db.find_items({'car': True})
@@ -70,7 +80,8 @@ test for existence, compare etc.
     True
 
 
-## Todo
+Todo
+----
 
 - Documentation
     * docstrings etc

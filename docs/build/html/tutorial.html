@@ -58,6 +58,57 @@
             
   <div class="section" id="the-tutorial">
 <h1>The Tutorial<a class="headerlink" href="#the-tutorial" title="Permalink to this headline">¶</a></h1>
+<p>Starting with OGitM is usually as simple as writing out the model declaration.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">tempfile</span><span class="p">;</span> <span class="n">db_directory</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span>
+<span class="kn">import</span> <span class="nn">ogitm</span>
+
+<span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">ogitm</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db_directory</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="n">String</span><span class="p">()</span>
+    <span class="n">age</span> <span class="o">=</span> <span class="n">Integer</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">hobby</span> <span class="o">=</span> <span class="n">Choice</span><span class="p">([</span><span class="s">&quot;football&quot;</span><span class="p">,</span> <span class="s">&quot;cricket&quot;</span><span class="p">,</span> <span class="s">&quot;knitting&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Note that the db parameter is mandatory - it specifies the place that the git
+repository will be stored.  Currently, this system uses bare repositories.
+Additionally, multiple models are stored in the same repository - there aren&#8217;t
+specific tables for each model.  This will change when tables are implemented,
+but for now be careful.</p>
+<p>Here, we&#8217;ve used a string as the path to the directory.  However, we can also
+separately instantiate a <a class="reference internal" href="apidocs/gitdb.html#ogitm.gitdb.GitDB" title="ogitm.gitdb.GitDB"><code class="xref py py-class docutils literal"><span class="pre">ogitm.gitdb.GitDB</span></code></a> instance, and use that
+instead.  Note that opening two databases with the same directory means that
+the two databases will point to the same place.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="n">db</span> <span class="o">=</span> <span class="n">ogitm</span><span class="o">.</span><span class="n">gitdb</span><span class="o">.</span><span class="n">GitDB</span><span class="p">(</span><span class="n">db_directory</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">AlternatePerson</span><span class="p">(</span><span class="n">ogitm</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">):</span>
+    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>The next thing to do is to start inserting documents into the database.  That&#8217;s
+exactly as simple as it should be.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="n">bob</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;bob&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;football&quot;</span><span class="p">)</span>
+<span class="n">geoff</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;geoff&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;knitting&quot;</span><span class="p">)</span>
+<span class="n">roberta</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;roberta&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;football&quot;</span><span class="p">)</span>
+
+<span class="k">assert</span> <span class="n">bob</span><span class="o">.</span><span class="n">age</span> <span class="o">==</span> <span class="mi">32</span>
+<span class="k">assert</span> <span class="n">geoff</span><span class="o">.</span><span class="n">hobby</span> <span class="o">==</span> <span class="s">&quot;knitting&quot;</span>
+<span class="k">assert</span> <span class="n">roberta</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s">&quot;roberta&quot;</span>
+
+<span class="n">bob</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">33</span>  <span class="c"># Ah, how time changes us all</span>
+<span class="n">bob</span><span class="o">.</span><span class="n">hobby</span> <span class="o">=</span> <span class="s">&quot;knitting&quot;</span>
+<span class="n">bob</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>The limitations on the fields will also stop you doing anything stupid by
+raising errors all over the place.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="k">try</span><span class="p">:</span>
+    <span class="n">roberta</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="o">-</span><span class="mi">41</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">roberta</span><span class="o">.</span><span class="n">age</span> <span class="o">==</span> <span class="mi">42</span>  <span class="c"># no change, because the change was wrong</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="k">False</span>
+</pre></div>
+</div>
 </div>
 
 
