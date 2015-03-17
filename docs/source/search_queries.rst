@@ -33,7 +33,7 @@ Checking if something equals something else is the easiest check of all.
 
 .. code-block:: python3
 
-    >>> MyModel.find(name="Bex").first() == bob
+    >>> MyModel.find(name="Bex").first() == bex
     True
     >>> MyModel.find(age=34).all()
     []
