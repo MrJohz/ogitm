@@ -1,32 +1,62 @@
 import pygit2 as pg2
 import json
+import shutil
 from os import path
 from functools import reduce
+from contextlib import contextmanager
 
 from .treewrapper import TreeWrapper
 from .json_wrapper import JsonDictWrapper
 from .search_functions import SearchFunction
 
-
-# Used to allow GitDB.transaction() context manager
-class _transaction:
-
-    def __init__(self, s):
-        self.s = s
-
-    def __enter__(self):
-        self.s.begin_transaction()
-        self.s._context_managed = True
-
-    def __exit__(self, et, ev, tb):
-        self.s._context_managed = False
-        if et is not None:
-            self.s.rollback()
-        else:
-            self.s.commit()
+RESERVED_TABLE_NAMES = {'__meta__', '__defaulttable__'}
 
 
 class GitDB:
+
+    def __init__(self, location):
+        self.location = location
+        self.meta_location = path.join(location, '__meta__')
+        self.meta_repo = pg2.init_repository(self.meta_location, bare=True)
+        self.meta_tree = JsonDictWrapper(TreeWrapper(self.meta_repo))
+        self.default_table = self.table('__defaulttable__')
+
+    def table(self, table_name):
+        if table_name in RESERVED_TABLE_NAMES:
+            if table_name != '__defaulttable__':
+                raise ValueError("Table name " + table_name + " is reserved.")
+
+        tables = self.meta_tree.get('table_list', [])
+
+        if table_name not in tables:
+            tables.append(table_name)
+
+        self.meta_tree['table_list'] = tables
+        return Table(path.join(self.location, table_name))
+
+    def __getitem__(self, table_name):
+        return self.table(table_name)
+
+    def drop(self, table_name, force=False):
+        if table_name in RESERVED_TABLE_NAMES:
+            raise ValueError("Table name " + table_name + " is reserved.")
+
+        tables = self.meta_tree.get('table_list', [])
+        if table_name not in tables and not force:
+            raise ValueError("Table name " + table_name + " does not exist.")
+
+        tables.remove(table_name)
+        try:
+            shutil.rmtree(table_name)
+        except OSError:
+            msg = "Table name " + table_name + " could not be deleted"
+            raise ValueError(msg)
+
+    def __getattr__(self, attr):
+        return getattr(self.default_table, attr)
+
+
+class Table:
 
     def _get_next_id(self):
         if 'meta-last_id' in self.meta_tree:
@@ -88,8 +118,19 @@ class GitDB:
         self._transaction_open = False
         self.data_tree.rollback()
 
+    @contextmanager
     def transaction(self):
-        return _transaction(self)
+        self.begin_transaction()
+        self._context_managed = True
+        try:
+            yield
+        except:
+            self._context_managed = False
+            self.rollback()
+            raise  # re-raise exception, just checking if exception occurred
+        else:
+            self._context_managed = False
+            self.commit()
 
     def insert(self, document):
         d_id = self._get_next_id()

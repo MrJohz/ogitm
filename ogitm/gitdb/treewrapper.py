@@ -33,7 +33,11 @@ class TreeWrapper:
         return self._repo[entry.id].data.decode('utf-8')
 
     def _get_from_head(self, name):
-        entry = self._get_tree()[name]
+        curr_tree = self._get_tree()
+        if curr_tree is None:
+            raise KeyError('{name} not in current tree'.format(name=name))
+
+        entry = curr_tree[name]
         return self._repo[entry.id].data.decode('utf-8')
 
     def __delitem__(self, name):

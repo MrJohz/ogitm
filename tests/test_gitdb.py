@@ -150,7 +150,7 @@ class TestSearchFunctions:
 
     @pytest.fixture
     def gdb(self, tmpdir):
-        g = gitdb.GitDB(str(tmpdir))
+        g = gitdb.GitDB(str(tmpdir)).table("test-table")
         g.insert({'int': -42})
         g.insert({'int': 1})
         g.insert({'int': 12})
