@@ -1,15 +1,20 @@
-import pygit2 as pg2
 import json
 import shutil
 from os import path
 from functools import reduce
 from contextlib import contextmanager
 
+import pygit2 as pg2
+
 from .treewrapper import TreeWrapper
 from .json_wrapper import JsonDictWrapper
 from .search_functions import SearchFunction
 
-RESERVED_TABLE_NAMES = {'__meta__', '__defaulttable__'}
+
+__all__ = ['DEFAULT_TABLE', 'RESERVED_TABLE_NAMES', 'GitDB', 'Table']
+
+DEFAULT_TABLE = '__defaulttable__'
+RESERVED_TABLE_NAMES = {'__meta__', DEFAULT_TABLE}
 
 
 class GitDB:
@@ -19,11 +24,11 @@ class GitDB:
         self.meta_location = path.join(location, '__meta__')
         self.meta_repo = pg2.init_repository(self.meta_location, bare=True)
         self.meta_tree = JsonDictWrapper(TreeWrapper(self.meta_repo))
-        self.default_table = self.table('__defaulttable__')
+        self.default_table = self.table(DEFAULT_TABLE)
 
     def table(self, table_name):
         if table_name in RESERVED_TABLE_NAMES:
-            if table_name != '__defaulttable__':
+            if table_name != DEFAULT_TABLE:
                 raise ValueError("Table name " + table_name + " is reserved.")
 
         tables = self.meta_tree.get('table_list', [])
@@ -44,13 +49,16 @@ class GitDB:
         tables = self.meta_tree.get('table_list', [])
         if table_name not in tables and not force:
             raise ValueError("Table name " + table_name + " does not exist.")
+        elif force:
+            return
 
         tables.remove(table_name)
         try:
-            shutil.rmtree(table_name)
-        except OSError:
+            shutil.rmtree(path.join(self.location, table_name))
+        except OSError as oe:  # pragma: no cover
             msg = "Table name " + table_name + " could not be deleted"
-            raise ValueError(msg)
+            print(oe)
+            raise ValueError(msg) from oe
 
     def __getattr__(self, attr):
         return getattr(self.default_table, attr)
@@ -71,6 +79,7 @@ class Table:
         return new_meta
 
     def __init__(self, location):
+        self.location = location
         self.dr_loc = path.join(location, 'data')
         self.data_repo = pg2.init_repository(self.dr_loc, bare=True)
         self.data_tree = JsonDictWrapper(TreeWrapper(self.data_repo))
@@ -81,6 +90,9 @@ class Table:
 
         self._transaction_open = False
         self._context_managed = False
+
+    def __eq__(self, other):
+        return isinstance(other, Table) and other.location == self.location
 
     @property
     def transaction_open(self):
