@@ -126,6 +126,9 @@ class TestGitDB:
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
 
+    def test_searching_empty(self, gdb):
+        assert gdb.find({'circle': True}) == []
+
     def test_find_one(self, gdb):
         gdb.insert({'a': 1})
         gdb.insert({'a': 'b'})
@@ -144,6 +147,45 @@ class TestGitDB:
         assert gdb.find_items({'a': 1}) == [{'a': 1}]
         assert len(gdb.find_items({'a': {'exists': True}})) == 3
         assert gdb.find_items({'a': 'non-existant'}) == []
+
+    def test_creating_tables(self, gdb):
+        # Syntax 1
+        t1 = gdb.table('test-table')
+        # Syntax 2
+        t2 = gdb['test-table']
+
+        assert t1 == t2
+
+    def test_using_default_table(self, gdb):
+        t1 = gdb[gitdb.DEFAULT_TABLE]
+        assert t1 == gdb.default_table
+
+        doc = gdb.insert({'alpha': 'beta', 'gamma': 1})
+        assert t1.get(doc) == {'alpha': 'beta', 'gamma': 1}
+
+    def test_failed_tables(self, gdb):
+        with pytest.raises(ValueError):
+            gdb['__meta__']
+
+    def test_dropping_tables(self, gdb):
+        t1 = gdb['test-table']
+        t1.insert({'alpha': 'beta', 'gamma': 1})
+        assert len(t1.find({'alpha': 'beta'})) == 1
+        gdb.drop('test-table')
+        t2 = gdb['test-table']
+        assert len(t2.find({'alpha': 'beta'})) == 0
+
+    def test_failed_drops(self, gdb):
+        with pytest.raises(ValueError):
+            gdb.drop('__meta__')
+
+        with pytest.raises(ValueError):
+            gdb.drop(gitdb.DEFAULT_TABLE)
+
+        with pytest.raises(ValueError):
+            gdb.drop('this table does not exist at all')
+
+        gdb.drop('this table does not exist at all', force=True)
 
 
 class TestSearchFunctions:
