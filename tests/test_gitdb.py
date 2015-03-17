@@ -155,6 +155,7 @@ class TestGitDB:
         t2 = gdb['test-table']
 
         assert t1 == t2
+        assert t1 != gdb['test-table-new-name']
 
     def test_using_default_table(self, gdb):
         t1 = gdb[gitdb.DEFAULT_TABLE]

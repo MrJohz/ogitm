@@ -38,6 +38,10 @@ class TestOGitM:
             name = ogitm.fields.String()
             age = ogitm.fields.Integer()
 
+        class TestWithOtherTableName(ogitm.Model, db=db, table="other"):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer()
+
         assert TestComplexDeclr.other_fields == "Allowed as well"
 
         myt = TestComplexDeclr("hello")
@@ -47,18 +51,23 @@ class TestOGitM:
         assert myt.get_name() == "Jeremy"
 
         with pytest.raises(TypeError):
-
             class OverwritingID(ogitm.Model, db=db):
                 id = ogitm.fields.String()
 
         with pytest.raises(TypeError):
-
             class UnderscoredField(ogitm.Model, db=db):
                 _name = ogitm.fields.String()
 
         with pytest.raises(TypeError):
-
             class NoDatabase(ogitm.Model):
+                pass
+
+        with pytest.raises(TypeError):
+            class TooManyClassParams(ogitm.Model, db=db, bubba="zombie"):
+                pass
+
+        with pytest.raises(TypeError):
+            class InvalidDBType(ogitm.Model, db=4):
                 pass
 
         class OverrideInitialisation(ogitm.Model, db=db):
@@ -112,20 +121,21 @@ class TestOGitM:
         assert tm.name is None
         doc_id = tm.save()
 
-        assert db.get(doc_id) == {'name': None, 'age': 3}
+        assert TestModel.get_table().get(doc_id) == {'name': None, 'age': 3}
 
     def test_data_update(self, simple_model):
         db, TestModel = simple_model
+        table = TestModel.get_table()
 
         tm = TestModel(age=3)
         assert tm.name is None
         doc_id = tm.save()
-        assert db.get(doc_id) == {'name': None, 'age': 3}
+        assert table.get(doc_id) == {'name': None, 'age': 3}
 
         tm.name = "vabble"
         assert tm.name == "vabble"
         assert doc_id == tm.save()
-        assert db.get(doc_id) == {'name': 'vabble', 'age': 3}
+        assert table.get(doc_id) == {'name': 'vabble', 'age': 3}
 
     def test_class_instance_scoping(self, simple_model):
         db, TestModel = simple_model
@@ -196,3 +206,37 @@ class TestOGitM:
         # contents are the same.
         assert TestModel.find(name={'eq': 'Bettie'}) == \
             TestModel.find(name='Bettie')
+
+    def test_different_tables(self, simple_model):
+        db, TestModel = simple_model
+        TestModel(age=25, name="Bettie")
+        assert TestModel.find(age=25).first().name == "Bettie"
+
+        # Same fields as in TestModel
+        class DifferentModel(ogitm.Model, db=db):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer(nullable=False)
+
+        assert DifferentModel.find(age=25).first() is None
+
+        # Same fields and table as in TestModel
+        class SameModel(ogitm.Model, db=TestModel.get_table()):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer(nullable=False)
+
+        assert SameModel.find(age=25).first().name == "Bettie"
+
+        table_name = TestModel.get_table().name
+
+        # Same fields, table name as in TestModel
+        class AlsoSameModel(ogitm.Model, db=db, table=table_name):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer(nullable=False)
+
+        assert AlsoSameModel.find(age=25).first().name == "Bettie"
+
+        class TestModel(ogitm.Model, db=db):
+            name = ogitm.fields.String()
+            age = ogitm.fields.Integer(nullable=False)
+
+        assert TestModel.find(age=25).first().name == "Bettie"

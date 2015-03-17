@@ -37,7 +37,7 @@ class GitDB:
             tables.append(table_name)
 
         self.meta_tree['table_list'] = tables
-        return Table(path.join(self.location, table_name))
+        return Table(table_name, path.join(self.location, table_name))
 
     def __getitem__(self, table_name):
         return self.table(table_name)
@@ -78,7 +78,9 @@ class Table:
 
         return new_meta
 
-    def __init__(self, location):
+    def __init__(self, name, location):
+        self.name = name
+
         self.location = location
         self.dr_loc = path.join(location, 'data')
         self.data_repo = pg2.init_repository(self.dr_loc, bare=True)

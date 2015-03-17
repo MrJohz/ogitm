@@ -1,3 +1,5 @@
+import inflection
+
 from . import fields
 from . import gitdb
 
@@ -53,7 +55,7 @@ class MetaModel(type):
 
     _type_attributes = {}
 
-    def __new__(meta, name, bases, dct, db=None):
+    def __new__(meta, name, bases, dct, **kwargs):
         attrs = {}
         properties = {}
         for key, field in dct.items():
@@ -76,13 +78,28 @@ class MetaModel(type):
         meta._type_attributes[typ] = attrs
         return typ
 
-    def __init__(cls, name, bases, dct, db=None):
+    def __init__(cls, name, bases, dct, **kwargs):
+        db = kwargs.pop('db', None)
         if db is None and name != "Model":
             raise TypeError("Missing 'db' param.  A database must be provided")
-
-        if isinstance(db, str):
+        elif isinstance(db, str):
             db = gitdb.GitDB(db)
-        cls._db = db
+
+        table_name = kwargs.pop('table', inflection.tableize(name))
+        if isinstance(db, gitdb.GitDB):
+            table = db.table(table_name)
+        elif isinstance(db, gitdb.Table):
+            table = db
+        elif name == "Model":
+            table = None
+        else:
+            n = "Class {c}'s db parameter must be of type [str, GitDB, Table]"
+            raise TypeError((n + ", not {t}").format(c=name, t=type(db)))
+
+        super().__init__(name, bases, dct, **kwargs)
+
+        if db is not None:
+            cls._table = table
 
     @classmethod
     def get_attributes(cls, instance):
@@ -134,7 +151,7 @@ class Model(metaclass=MetaModel):
             self._init_from_kwargs(kwargs)
         else:
             self.id = model_id
-            self._init_from_kwargs(self._db.get(model_id), save=False)
+            self._init_from_kwargs(self._table.get(model_id), save=False)
 
         assert self.id is not None
 
@@ -168,11 +185,15 @@ class Model(metaclass=MetaModel):
         a new document into the database, storing the document id.
         """
         if self.id is None:
-            self.id = self._db.insert(self._attrs)
+            self.id = self._table.insert(self._attrs)
         else:
-            self.id = self._db.update(self.id, self._attrs)
+            self.id = self._table.update(self.id, self._attrs)
 
         return self.id
+
+    @classmethod
+    def get_table(cls):
+        return cls._table
 
     @classmethod
     def find(cls, **kwargs):
@@ -192,7 +213,7 @@ class Model(metaclass=MetaModel):
                 m = "Cannot find on attributes not owned by this class ({key})"
                 raise TypeError(m.format(key=i))
 
-        return ReturnSet(cls._db.find_ids(kwargs), cls)
+        return ReturnSet(cls._table.find_ids(kwargs), cls)
 
     def __eq__(self, other):
         if not isinstance(other, type(self)):
