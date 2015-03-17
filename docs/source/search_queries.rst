@@ -26,6 +26,21 @@ We will use a model that looks like this:
     >>> bub = MyModel(name="Bubba", age=3243, has_hair=False)
 
 
+Scalar Searches
+---------------
+
+Checking if something equals something else is the easiest check of all.
+
+.. code-block:: python3
+
+    >>> MyModel.find(name="Bex").first() == bob
+    True
+    >>> MyModel.find(age=34).all()
+    []
+    >>> len(MyModel.find(has_hair=True))
+    2
+
+
 Comparison
 ----------
 
@@ -69,7 +84,9 @@ String Checks
 
 String types can be checked using the various :py:meth:`~str.is*` string
 methods, as well as :py:meth:`~str.startswith` and :py:meth:`~str.endswith`.
-These are hardcoded, but delegate to the string's natural methods.
+These are hardcoded, but delegate to the string's natural methods.  If you can
+think of some way of automatically selecting all string methods that return a
+boolean, please let me know!
 
 .. code-block:: python3
 
@@ -85,7 +102,8 @@ Existence
 Testing for existence isn't usually necessary when using models, as (assuming
 that you only use the model to insert documents), you know that the only fields
 that will exist will be the fields you inserted.  It is more useful when using
-arbitrary documents with the raw GitDB instance.
+arbitrary documents with the raw GitDB instance.  However, the syntax of the
+check is the same in both cases.
 
 .. code-block:: python3
 
