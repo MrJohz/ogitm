@@ -1,0 +1,371 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>ogitm.gitdb &mdash; OGitM 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="OGitM 0.0.1 documentation" href="../../index.html" />
+    <link rel="up" title="ogitm" href="../ogitm.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../../index.html">OGitM 0.0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="../index.html" >Module code</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../ogitm.html" accesskey="U">ogitm</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for ogitm.gitdb</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
+<span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
+
+<span class="kn">import</span> <span class="nn">pygit2</span> <span class="kn">as</span> <span class="nn">pg2</span>
+
+<span class="kn">from</span> <span class="nn">.treewrapper</span> <span class="kn">import</span> <span class="n">TreeWrapper</span>
+<span class="kn">from</span> <span class="nn">.json_wrapper</span> <span class="kn">import</span> <span class="n">JsonDictWrapper</span>
+<span class="kn">from</span> <span class="nn">.search_functions</span> <span class="kn">import</span> <span class="n">SearchFunction</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;DEFAULT_TABLE&#39;</span><span class="p">,</span> <span class="s">&#39;RESERVED_TABLE_NAMES&#39;</span><span class="p">,</span> <span class="s">&#39;GitDB&#39;</span><span class="p">,</span> <span class="s">&#39;Table&#39;</span><span class="p">]</span>
+
+<span class="n">DEFAULT_TABLE</span> <span class="o">=</span> <span class="s">&#39;__defaulttable__&#39;</span>
+<span class="n">RESERVED_TABLE_NAMES</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;__meta__&#39;</span><span class="p">,</span> <span class="n">DEFAULT_TABLE</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="GitDB"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.GitDB">[docs]</a><span class="k">class</span> <span class="nc">GitDB</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;The raw database class.</span>
+
+<span class="sd">    This class constructs a database instance in the location described.  This</span>
+<span class="sd">    is automatically created under the covers by :py:class:`ogitm.OGitM`, but</span>
+<span class="sd">    it can also be created and used outside the confines of Object-Model</span>
+<span class="sd">    mappings.  Total freedom!</span>
+
+<span class="sd">    :param str location: The path of the database.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_location</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="s">&#39;__meta__&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_repo</span> <span class="o">=</span> <span class="n">pg2</span><span class="o">.</span><span class="n">init_repository</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_location</span><span class="p">,</span> <span class="n">bare</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span> <span class="o">=</span> <span class="n">JsonDictWrapper</span><span class="p">(</span><span class="n">TreeWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_repo</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">default_table</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">DEFAULT_TABLE</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GitDB.table"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.GitDB.table">[docs]</a>    <span class="k">def</span> <span class="nf">table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Create a new table.</span>
+
+<span class="sd">        This creates a new table in the current database.  You can also use</span>
+<span class="sd">        the form ``gitdb[&#39;table name&#39;]``, which delegates to this method.  If</span>
+<span class="sd">        a table exists, this method will return a new instance of Table</span>
+<span class="sd">        pointing to the same table.  (Note that two tables pointing to the same</span>
+<span class="sd">        location will always return equal.)</span>
+
+<span class="sd">        :param str table_name: The name this table will take.</span>
+<span class="sd">        :raises ValueError: if the name is a reserved table name.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">RESERVED_TABLE_NAMES</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">table_name</span> <span class="o">!=</span> <span class="n">DEFAULT_TABLE</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Table name &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s">&quot; is reserved.&quot;</span><span class="p">)</span>
+
+        <span class="n">tables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;table_list&#39;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span><span class="p">:</span>
+            <span class="n">tables</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="p">[</span><span class="s">&#39;table_list&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tables</span>
+        <span class="k">return</span> <span class="n">Table</span><span class="p">(</span><span class="n">table_name</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">table_name</span><span class="p">))</span>
+</div>
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GitDB.drop"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.GitDB.drop">[docs]</a>    <span class="k">def</span> <span class="nf">drop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table_name</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Completely and irevocably destroy a table.</span>
+
+<span class="sd">        :param str table_name: The name of the table to destroy</span>
+<span class="sd">        :param bool force: If true, no errors will be raised if the table does</span>
+<span class="sd">            not exist.</span>
+
+<span class="sd">        :raises ValueError: if the table is reserved, or could not be deleted</span>
+<span class="sd">            for other reasons.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">in</span> <span class="n">RESERVED_TABLE_NAMES</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Table name &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s">&quot; is reserved.&quot;</span><span class="p">)</span>
+
+        <span class="n">tables</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;table_list&#39;</span><span class="p">,</span> <span class="p">[])</span>
+        <span class="k">if</span> <span class="n">table_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tables</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Table name &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s">&quot; does not exist.&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">force</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="n">tables</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">table_name</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">shutil</span><span class="o">.</span><span class="n">rmtree</span><span class="p">(</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">location</span><span class="p">,</span> <span class="n">table_name</span><span class="p">))</span>
+        <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">oe</span><span class="p">:</span>  <span class="c"># pragma: no cover</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="s">&quot;Table name &quot;</span> <span class="o">+</span> <span class="n">table_name</span> <span class="o">+</span> <span class="s">&quot; could not be deleted&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="kn">from</span> <span class="nn">oe</span>
+</div>
+    <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default_table</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="Table"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table">[docs]</a><span class="k">class</span> <span class="nc">Table</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">_get_next_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s">&#39;meta-last_id&#39;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="p">:</span>
+            <span class="n">new_meta</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="p">[</span><span class="s">&#39;meta-last_id&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="p">[</span><span class="s">&#39;meta-last_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;0&#39;</span>
+            <span class="n">new_meta</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="p">[</span><span class="s">&#39;meta-last_id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">new_meta</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">new_meta</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">location</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">location</span> <span class="o">=</span> <span class="n">location</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dr_loc</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="s">&#39;data&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_repo</span> <span class="o">=</span> <span class="n">pg2</span><span class="o">.</span><span class="n">init_repository</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dr_loc</span><span class="p">,</span> <span class="n">bare</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span> <span class="o">=</span> <span class="n">JsonDictWrapper</span><span class="p">(</span><span class="n">TreeWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_repo</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mr_loc</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">location</span><span class="p">,</span> <span class="s">&#39;meta&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_repo</span> <span class="o">=</span> <span class="n">pg2</span><span class="o">.</span><span class="n">init_repository</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mr_loc</span><span class="p">,</span> <span class="n">bare</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">meta_tree</span> <span class="o">=</span> <span class="n">TreeWrapper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meta_repo</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span> <span class="o">=</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Table</span><span class="p">)</span> <span class="ow">and</span> <span class="n">other</span><span class="o">.</span><span class="n">location</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">location</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">transaction_open</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span>
+
+<div class="viewcode-block" id="Table.begin_transaction"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.begin_transaction">[docs]</a>    <span class="k">def</span> <span class="nf">begin_transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot manually manage transaction inside context manager&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot begin transaction when there is an open transaction&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span> <span class="o">=</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="Table.commit"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.commit">[docs]</a>    <span class="k">def</span> <span class="nf">commit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot manually manage transaction inside context manager&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot commit when there is not open transaction&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Table.rollback"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.rollback">[docs]</a>    <span class="k">def</span> <span class="nf">rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot manually manage transaction inside context manager&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span><span class="p">:</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="s">&quot;Cannot rollback when there is not open transaction&quot;</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">m</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+</div>
+    <span class="nd">@contextmanager</span>
+<div class="viewcode-block" id="Table.transaction"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.transaction">[docs]</a>    <span class="k">def</span> <span class="nf">transaction</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">begin_transaction</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">yield</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rollback</span><span class="p">()</span>
+            <span class="k">raise</span>  <span class="c"># re-raise exception, just checking if exception occurred</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_context_managed</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Table.insert"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.insert">[docs]</a>    <span class="k">def</span> <span class="nf">insert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="n">d_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_next_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="s">&#39;doc-{id}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">d_id</span><span class="p">)]</span> <span class="o">=</span> <span class="n">document</span>
+
+        <span class="c"># set up indexes</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">index_name</span> <span class="o">=</span> <span class="s">&#39;index-{key}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">transaction_open</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;insert doc-{id}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">d_id</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">d_id</span>
+</div>
+<div class="viewcode-block" id="Table.update"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">d_id</span><span class="p">,</span> <span class="n">document</span><span class="p">):</span>
+        <span class="n">doc_name</span> <span class="o">=</span> <span class="s">&#39;doc-{id}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">d_id</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">doc_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s">&quot;Cannot update document that doesn&#39;t exist&quot;</span><span class="p">)</span>
+
+        <span class="n">old_doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="n">doc_name</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="n">doc_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">document</span>
+
+        <span class="c"># remove old indexes</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">old_doc</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">index_name</span> <span class="o">=</span> <span class="s">&#39;index-{key}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">d_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="c"># insert new indexes</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">document</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">val</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">index_name</span> <span class="o">=</span> <span class="s">&#39;index-{key}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">index_name</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">index</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d_id</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="n">index_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">index</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_transaction_open</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s">&#39;update &#39;</span> <span class="o">+</span> <span class="n">doc_name</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">d_id</span>
+</div>
+<div class="viewcode-block" id="Table.save"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">msg</span><span class="o">=</span><span class="s">&#39;-&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+</div>
+<div class="viewcode-block" id="Table.get"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.get">[docs]</a>    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc_id</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">doc_id</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;id must be an integer&quot;</span><span class="p">)</span>
+
+        <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;doc-{id}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">doc_id</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">err</span> <span class="o">=</span> <span class="s">&quot;No such document under id {id}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">doc_id</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">doc</span>
+</div>
+<div class="viewcode-block" id="Table.find_ids"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.find_ids">[docs]</a>    <span class="k">def</span> <span class="nf">find_ids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">where</span><span class="p">)]</span>
+</div>
+<div class="viewcode-block" id="Table.find_items"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.find_items">[docs]</a>    <span class="k">def</span> <span class="nf">find_items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">i</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">where</span><span class="p">)]</span>
+</div>
+<div class="viewcode-block" id="Table.find"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.find">[docs]</a>    <span class="k">def</span> <span class="nf">find</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="n">all_ids</span> <span class="o">=</span> <span class="p">{</span><span class="nb">int</span><span class="p">(</span><span class="n">i</span><span class="p">[</span><span class="mi">4</span><span class="p">:])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">items_list</span><span class="p">()</span>
+                   <span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;doc-&#39;</span><span class="p">)}</span>
+
+        <span class="n">id_sets</span> <span class="o">=</span> <span class="p">[</span><span class="n">all_ids</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">term</span> <span class="ow">in</span> <span class="n">where</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;index-{key}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="n">key</span><span class="p">),</span> <span class="p">{})</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">id_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_complex</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">all_ids</span><span class="p">))</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c"># simple term, i.e. name=&quot;bob&quot;</span>
+                <span class="n">id_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_simple</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">index</span><span class="p">))</span>
+
+        <span class="n">doc_ids</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">&amp;</span> <span class="n">y</span><span class="p">,</span> <span class="n">id_sets</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[(</span><span class="n">i</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_tree</span><span class="p">[</span><span class="s">&#39;doc-{id}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">)])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">doc_ids</span><span class="p">]</span>
+</div>
+<div class="viewcode-block" id="Table.find_one"><a class="viewcode-back" href="../../apidocs/gitdb.html#ogitm.gitdb.Table.find_one">[docs]</a>    <span class="k">def</span> <span class="nf">find_one</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">where</span><span class="p">):</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">where</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+</div>
+    <span class="k">def</span> <span class="nf">_find_simple</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="n">vals</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">set</span><span class="p">(</span><span class="n">index</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="p">[]))</span>
+
+    <span class="k">def</span> <span class="nf">_find_complex</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">al</span><span class="p">):</span>
+        <span class="n">inc_sets</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">operator</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">query</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">SearchFunction</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">operator</span><span class="p">)</span>
+            <span class="n">inc_sets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">func</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">operator</span><span class="p">,</span> <span class="n">arg</span><span class="p">,</span> <span class="n">index</span><span class="p">,</span> <span class="n">query</span><span class="p">,</span> <span class="n">al</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="n">x</span> <span class="o">|</span> <span class="n">y</span><span class="p">,</span> <span class="n">inc_sets</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Jonathan Frere.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.2</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

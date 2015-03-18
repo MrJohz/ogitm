@@ -1,0 +1,266 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Docs: OGitM &mdash; OGitM 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="OGitM 0.0.1 documentation" href="../index.html" />
+    <link rel="up" title="OGitM API Documentation" href="api_docs.html" />
+    <link rel="next" title="API Docs: Fields" href="fields.html" />
+    <link rel="prev" title="OGitM API Documentation" href="api_docs.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="fields.html" title="API Docs: Fields"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="api_docs.html" title="OGitM API Documentation"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OGitM 0.0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="api_docs.html" accesskey="U">OGitM API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-ogitm">
+<span id="api-docs-ogitm"></span><h1>API Docs: OGitM<a class="headerlink" href="#module-ogitm" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ogitm.Model">
+<em class="property">class </em><code class="descclassname">ogitm.</code><code class="descname">Model</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#Model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.Model" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for models</p>
+<p>Subclass this class to declare a model.  <a class="reference internal" href="#ogitm.Model" title="ogitm.Model"><code class="xref py py-class docutils literal"><span class="pre">Model</span></code></a> provides a
+default initialiser, an equivalence function, and the
+<a class="reference internal" href="#ogitm.Model.save" title="ogitm.Model.save"><code class="xref py py-meth docutils literal"><span class="pre">save()</span></code></a> and <a class="reference internal" href="#ogitm.Model.find" title="ogitm.Model.find"><code class="xref py py-meth docutils literal"><span class="pre">find()</span></code></a> methods.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>model_id</strong> (<em>int</em>) &#8211; If this is provided, the model will be initialised
+with the attributes specified by the document with that id in the
+database.  This is generally for internal use (i.e, creating the object
+after a search has been completed) but it may be useful.</li>
+<li><strong>kwargs</strong> (<em>mixed</em>) &#8211; This is the more usual way of initialising the model
+- that is, by passing in key=val pairs describing the values passed to
+the fields specified by the model.  The default initialiser will then
+go through all of the arguments, check that they are known fields, and
+assign them.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Attribute id:</th><td class="field-body"><p class="first last">The instance will always have this attribute referring to
+the id that it refers to in the database.  It will be None if the
+instance has not been inserted into the database (this should never
+happen, though!)</p>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="classmethod">
+<dt id="ogitm.Model.find">
+<em class="property">classmethod </em><code class="descname">find</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#Model.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.Model.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds documents in the database.</p>
+<p>Given keyword arguments (which have the same format as the arguments
+given to <code class="xref py py-meth docutils literal"><span class="pre">gitdb.GitDB.find()</span></code>), this method returns a
+<a class="reference internal" href="#ogitm.ReturnSet" title="ogitm.ReturnSet"><code class="xref py py-class docutils literal"><span class="pre">ReturnSet</span></code></a> containing all of the matching documents.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> (<em>mixed</em>) &#8211; See <code class="xref py py-meth docutils literal"><span class="pre">gitdb.GitDB.find()</span></code> for the full
+finding syntax.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><a class="reference internal" href="#ogitm.ReturnSet" title="ogitm.ReturnSet"><code class="xref py py-class docutils literal"><span class="pre">ReturnSet</span></code></a> of all of the matching documents.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="classmethod">
+<dt id="ogitm.Model.get_table">
+<em class="property">classmethod </em><code class="descname">get_table</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#Model.get_table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.Model.get_table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the table associated with this model.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ogitm.Model.save">
+<code class="descname">save</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#Model.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.Model.save" title="Permalink to this definition">¶</a></dt>
+<dd><p>Saves this instance to the database.</p>
+<p>If this instance has been saved before, this will update the database
+document corresponding to the current id.  Otherwise, it will insert
+a new document into the database, storing the document id.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ogitm.ReturnSet">
+<em class="property">class </em><code class="descclassname">ogitm.</code><code class="descname">ReturnSet</code><span class="sig-paren">(</span><em>ids</em>, <em>cls</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#ReturnSet"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.ReturnSet" title="Permalink to this definition">¶</a></dt>
+<dd><p>A class representing the documents returned by a particular query.</p>
+<p>This class can be used to further narrow down the search
+(<a class="reference internal" href="#ogitm.ReturnSet.find" title="ogitm.ReturnSet.find"><code class="xref py py-meth docutils literal"><span class="pre">find()</span></code></a>), or return initialised instances of the model that
+found them (<a class="reference internal" href="#ogitm.ReturnSet.first" title="ogitm.ReturnSet.first"><code class="xref py py-meth docutils literal"><span class="pre">first()</span></code></a>, <a class="reference internal" href="#ogitm.ReturnSet.all" title="ogitm.ReturnSet.all"><code class="xref py py-meth docutils literal"><span class="pre">all()</span></code></a>,
+<code class="xref py py-meth docutils literal"><span class="pre">__getitem__()</span></code>).  It can also tell you how many items the set
+currently contains (<code class="xref py py-meth docutils literal"><span class="pre">__len__()</span></code>)</p>
+<p>The documents are returned sorted in order of the ids.  This ensures that
+further operations on a set will preserve order, but should not be relied
+on, as the specifics of document ids is not part of the public interface.</p>
+<dl class="method">
+<dt id="ogitm.ReturnSet.all">
+<code class="descname">all</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#ReturnSet.all"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.ReturnSet.all" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a list of all of the documents.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="ogitm.ReturnSet.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#ReturnSet.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.ReturnSet.find" title="Permalink to this definition">¶</a></dt>
+<dd><p>Refine the terms of the original search</p>
+<p>Using the model that created this set, find which documents match the
+new queres, then update this set to point to the intersection of both
+the old and new queries.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>kwargs</strong> (<em>mixed</em>) &#8211; See <a class="reference internal" href="#ogitm.Model.find" title="ogitm.Model.find"><code class="xref py py-meth docutils literal"><span class="pre">Model.find()</span></code></a>.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">This set, to allow for chaining method calls.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ogitm.ReturnSet.first">
+<code class="descname">first</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#ReturnSet.first"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.ReturnSet.first" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the first document, or None</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ogitm.MetaModel">
+<em class="property">class </em><code class="descclassname">ogitm.</code><code class="descname">MetaModel</code><span class="sig-paren">(</span><em>name</em>, <em>bases</em>, <em>dct</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#MetaModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.MetaModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Metatype for OGitM Models</p>
+<p>Generally, a user should subclass <a class="reference internal" href="#ogitm.Model" title="ogitm.Model"><code class="xref py py-class docutils literal"><span class="pre">Model</span></code></a> instead of
+touching this class.  However, it is useful to be aware of the functions
+that MetaModel can perform.  Firstly, upon instantiation it removes all
+class attributes that extend <a class="reference internal" href="fields.html#ogitm.fields.BaseField" title="ogitm.fields.BaseField"><code class="xref py py-class docutils literal"><span class="pre">BaseField</span></code></a>, and
+assigns them to an internal dict.  It also ensures that any class that
+overrides <code class="xref py py-meth docutils literal"><span class="pre">__init__()</span></code> calls the super method.  This
+makes sure that the Model should always be in a useable state.</p>
+<p>It also provides the <a class="reference internal" href="#ogitm.MetaModel.get_attributes" title="ogitm.MetaModel.get_attributes"><code class="xref py py-meth docutils literal"><span class="pre">get_attributes()</span></code></a> class method
+which can be used to get the data for any particular class.</p>
+<dl class="classmethod">
+<dt id="ogitm.MetaModel.get_attributes">
+<em class="property">classmethod </em><code class="descname">get_attributes</code><span class="sig-paren">(</span><em>instance</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm.html#MetaModel.get_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.MetaModel.get_attributes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get fields for a Model class or instance</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>instance</strong> (<em>type or instance</em>) &#8211; An instance or class that has MetaModel
+as a metatype.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Dictionary of key -&gt; field pairs</td>
+</tr>
+<tr class="field-odd field"><th class="field-name" colspan="2">Raises KeyError:</th></tr>
+<tr class="field-odd field"><td>&nbsp;</td><td class="field-body">if the type or instance is not recognised</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="api_docs.html"
+                        title="previous chapter">OGitM API Documentation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="fields.html"
+                        title="next chapter">API Docs: Fields</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/apidocs/ogitm.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Jonathan Frere.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.2</a>
+      
+      |
+      <a href="../_sources/apidocs/ogitm.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>

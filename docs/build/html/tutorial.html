@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Tutorial &mdash; OGitM 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="OGitM 0.0.1 documentation" href="index.html" />
+    <link rel="next" title="Searching In GitDB" href="search_queries.html" />
+    <link rel="prev" title="Installing OGitM" href="installation.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="search_queries.html" title="Searching In GitDB"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installing OGitM"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">OGitM 0.0.1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="the-tutorial">
+<h1>The Tutorial<a class="headerlink" href="#the-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="using-the-ogitm-model">
+<h2>Using The OGitM Model<a class="headerlink" href="#using-the-ogitm-model" title="Permalink to this headline">¶</a></h2>
+<p>Starting with OGitM is usually as simple as writing out the model declaration.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tempfile</span><span class="p">;</span> <span class="n">db_directory</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">ogitm</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">Person</span><span class="p">(</span><span class="n">ogitm</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db_directory</span><span class="o">.</span><span class="n">name</span><span class="p">):</span>
+<span class="gp">...</span>
+<span class="gp">... </span>    <span class="n">name</span> <span class="o">=</span> <span class="n">ogitm</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">String</span><span class="p">()</span>
+<span class="gp">... </span>    <span class="n">age</span> <span class="o">=</span> <span class="n">ogitm</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Integer</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="gp">... </span>    <span class="n">hobby</span> <span class="o">=</span> <span class="n">ogitm</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">Choice</span><span class="p">([</span><span class="s">&quot;football&quot;</span><span class="p">,</span> <span class="s">&quot;karate&quot;</span><span class="p">,</span> <span class="s">&quot;knitting&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Note that the db parameter is mandatory - it specifies the place that the git
+repository will be stored.  Currently, this system uses bare repositories.
+Multiple models stored in the same database location will be stored in
+individual tables by default.  (The current implementation uses the
+<a class="reference external" href="http://inflection.readthedocs.org/en/latest/index.html#inflection.titleize">inflection</a> library&#8217;s <code class="docutils literal"><span class="pre">tableize</span></code> method (based on RoR&#8217;s tableize method).)</p>
+<p>Here, we&#8217;ve used a string as the path to the directory.  However, we can also
+separately instantiate a <a class="reference internal" href="apidocs/gitdb.html#ogitm.gitdb.GitDB" title="ogitm.gitdb.GitDB"><code class="xref py py-class docutils literal"><span class="pre">ogitm.gitdb.GitDB</span></code></a> instance, and use that
+instead.  Note that opening two databases with the same directory means that
+the two databases will point to the same place.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">db</span> <span class="o">=</span> <span class="n">ogitm</span><span class="o">.</span><span class="n">gitdb</span><span class="o">.</span><span class="n">GitDB</span><span class="p">(</span><span class="n">db_directory</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="go">&gt;&gt;&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">class</span> <span class="nc">AlternatePerson</span><span class="p">(</span><span class="n">ogitm</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">db</span><span class="o">=</span><span class="n">db</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">pass</span>
+</pre></div>
+</div>
+<p>The next thing to do is to start inserting documents into the database.  That&#8217;s
+exactly as simple as it should be.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">bob</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;bob&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;football&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">geoff</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;geoff&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">18</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;knitting&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">roberta</span> <span class="o">=</span> <span class="n">Person</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;roberta&quot;</span><span class="p">,</span> <span class="n">age</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span> <span class="n">hobby</span><span class="o">=</span><span class="s">&quot;football&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">bob</span><span class="o">.</span><span class="n">age</span><span class="p">)</span>
+<span class="go">32</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">geoff</span><span class="o">.</span><span class="n">hobby</span><span class="p">)</span>
+<span class="go">knitting</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">roberta</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+<span class="go">roberta</span>
+
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bob</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="mi">33</span>  <span class="c"># Ah, how time changes us all</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bob</span><span class="o">.</span><span class="n">hobby</span> <span class="o">=</span> <span class="s">&quot;knitting&quot;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">bob</span><span class="o">.</span><span class="n">save</span><span class="p">()</span> <span class="o">==</span> <span class="n">bob</span><span class="o">.</span><span class="n">id</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>The limitations on the fields will also stop you doing anything stupid by
+raising errors all over the place.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">roberta</span><span class="o">.</span><span class="n">age</span> <span class="o">=</span> <span class="o">-</span><span class="mi">3</span>
+<span class="gt">Traceback (most recent call last):</span>
+    <span class="o">...</span>
+<span class="gr">ValueError</span>: <span class="n">...</span>
+</pre></div>
+</div>
+<p>More useful than just storing data is being able to retrieve it later.  The
+easiest way to do that is by searching for it.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s">&quot;bob&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">first</span><span class="p">()</span> <span class="o">==</span> <span class="n">bob</span>
+<span class="go">True</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">age</span><span class="o">=</span><span class="mi">19</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span>  <span class="c"># No people aged 19</span>
+<span class="go">[]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Person</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">hobby</span><span class="o">=</span><span class="s">&quot;knitting&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="o">==</span> <span class="p">[</span><span class="n">bob</span><span class="p">,</span> <span class="n">geoff</span><span class="p">]</span>
+<span class="go">True</span>
+</pre></div>
+</div>
+<p>Note that this also works for more complex queries.  We can also chain queries
+together.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Person</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">age</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;gt&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}))</span>  <span class="c"># Matches all current documents</span>
+<span class="go">3</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">len</span><span class="p">(</span><span class="n">Person</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">age</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;gt&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">})</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">hobby</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;startswith&#39;</span><span class="p">:</span> <span class="s">&quot;k&quot;</span><span class="p">}))</span>
+<span class="go">2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="using-gitdb-directly">
+<h2>Using GitDB Directly<a class="headerlink" href="#using-gitdb-directly" title="Permalink to this headline">¶</a></h2>
+<p>Note that OGitM is essentially a wrapper around GitDB.  If you need access to
+GitDB as a simple document store, this is possible using the
+<a class="reference internal" href="apidocs/gitdb.html#module-ogitm.gitdb" title="ogitm.gitdb"><code class="xref py py-mod docutils literal"><span class="pre">ogitm.gitdb</span></code></a> module.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">tempfile</span><span class="p">;</span> <span class="n">db_directory</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">ogitm</span> <span class="k">import</span> <span class="n">gitdb</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span> <span class="o">=</span> <span class="n">gitdb</span><span class="o">.</span><span class="n">GitDB</span><span class="p">(</span><span class="n">db_directory</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A GitDB database is split up into tables.  GitDB automatically creates the
+<code class="docutils literal"><span class="pre">__defaulttable__</span></code> table, and passes any methods called on it straight to
+an internal copy of that table.  This allows for very simple usage of GitDB.
+However, it is more likely that a user would want to split up their data into
+multiple tables.</p>
+<div class="highlight-python3"><div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="n">db</span><span class="o">.</span><span class="n">default_table</span><span class="o">.</span><span class="n">name</span>
+<span class="go">&#39;__defaulttable__&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">db</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s">&#39;Table Name&#39;</span><span class="p">)</span>
+<span class="go">&lt;ogitm.gitdb.Table object at ...&gt;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">table</span><span class="p">(</span><span class="s">&#39;Table Name&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">table</span><span class="o">.</span><span class="n">insert</span><span class="p">({</span><span class="s">&#39;my doc&#39;</span><span class="p">:</span> <span class="s">&#39;your doc&#39;</span><span class="p">})</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+<span class="go">{&#39;my doc&#39;: &#39;your doc&#39;}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span><span class="o">.</span><span class="n">find_items</span><span class="p">({</span><span class="s">&#39;my doc&#39;</span><span class="p">:</span> <span class="s">&#39;your doc&#39;</span><span class="p">})</span>  <span class="c"># Using simple query</span>
+<span class="go">[{&#39;my doc&#39;: &#39;your doc&#39;}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">table</span><span class="o">.</span><span class="n">find_items</span><span class="p">({</span><span class="s">&#39;my doc&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;exists&#39;</span><span class="p">:</span> <span class="k">True</span><span class="p">}})</span>  <span class="c"># Using advanced query</span>
+<span class="go">[{&#39;my doc&#39;: &#39;your doc&#39;}]</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">The Tutorial</a><ul>
+<li><a class="reference internal" href="#using-the-ogitm-model">Using The OGitM Model</a></li>
+<li><a class="reference internal" href="#using-gitdb-directly">Using GitDB Directly</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installing OGitM</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="search_queries.html"
+                        title="next chapter">Searching In GitDB</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/tutorial.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Jonathan Frere.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.2</a>
+      
+      |
+      <a href="_sources/tutorial.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>

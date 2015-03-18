@@ -193,6 +193,7 @@ class Model(metaclass=MetaModel):
 
     @classmethod
     def get_table(cls):
+        """Returns the table associated with this model."""
         return cls._table
 
     @classmethod

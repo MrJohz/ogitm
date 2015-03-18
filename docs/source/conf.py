@@ -36,7 +36,7 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.coverage',
-    'sphinx.ext.linkcode',
+    'sphinx.ext.viewcode',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -289,15 +289,13 @@ texinfo_documents = [
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
 
-INIT_VALUES = ['ogitm', 'ogitm.gitdb']
+from unittest.mock import MagicMock
 
-def linkcode_resolve(domain, info):
-    if domain != 'py':
-        return None
-    if not info['module']:
-        return None
+class Mock(MagicMock):
 
-    if info['module'] in INIT_VALUES:
-        info['module'] += '.__init__'
-    filename = info['module'].replace('.', '/')
-    return "https://github.com/MrJohz/ogitm/tree/master/%s.py" % filename
+    @classmethod
+    def __getattr__(cls, name):
+        return Mock()
+
+MOCK_MODULES = ['pygit2']
+sys.modules.update((name, Mock()) for name in MOCK_MODULES)

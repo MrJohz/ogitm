@@ -18,6 +18,15 @@ RESERVED_TABLE_NAMES = {'__meta__', DEFAULT_TABLE}
 
 
 class GitDB:
+    """The raw database class.
+
+    This class constructs a database instance in the location described.  This
+    is automatically created under the covers by :py:class:`ogitm.OGitM`, but
+    it can also be created and used outside the confines of Object-Model
+    mappings.  Total freedom!
+
+    :param str location: The path of the database.
+    """
 
     def __init__(self, location):
         self.location = location
@@ -27,6 +36,17 @@ class GitDB:
         self.default_table = self.table(DEFAULT_TABLE)
 
     def table(self, table_name):
+        """Create a new table.
+
+        This creates a new table in the current database.  You can also use
+        the form ``gitdb['table name']``, which delegates to this method.  If
+        a table exists, this method will return a new instance of Table
+        pointing to the same table.  (Note that two tables pointing to the same
+        location will always return equal.)
+
+        :param str table_name: The name this table will take.
+        :raises ValueError: if the name is a reserved table name.
+        """
         if table_name in RESERVED_TABLE_NAMES:
             if table_name != DEFAULT_TABLE:
                 raise ValueError("Table name " + table_name + " is reserved.")
@@ -43,6 +63,15 @@ class GitDB:
         return self.table(table_name)
 
     def drop(self, table_name, force=False):
+        """Completely and irevocably destroy a table.
+
+        :param str table_name: The name of the table to destroy
+        :param bool force: If true, no errors will be raised if the table does
+            not exist.
+
+        :raises ValueError: if the table is reserved, or could not be deleted
+            for other reasons.
+        """
         if table_name in RESERVED_TABLE_NAMES:
             raise ValueError("Table name " + table_name + " is reserved.")
 
@@ -57,7 +86,6 @@ class GitDB:
             shutil.rmtree(path.join(self.location, table_name))
         except OSError as oe:  # pragma: no cover
             msg = "Table name " + table_name + " could not be deleted"
-            print(oe)
             raise ValueError(msg) from oe
 
     def __getattr__(self, attr):

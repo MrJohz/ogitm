@@ -1,0 +1,251 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>API Docs: GitDB &mdash; OGitM 0.0.1 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="OGitM 0.0.1 documentation" href="../index.html" />
+    <link rel="up" title="OGitM API Documentation" href="api_docs.html" />
+    <link rel="next" title="API Docs: Search Functions" href="search_functions.html" />
+    <link rel="prev" title="API Docs: Fields" href="fields.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
+  </head>
+  <body role="document">
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="search_functions.html" title="API Docs: Search Functions"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="fields.html" title="API Docs: Fields"
+             accesskey="P">previous</a> |</li>
+        <li class="nav-item nav-item-0"><a href="../index.html">OGitM 0.0.1 documentation</a> &raquo;</li>
+          <li class="nav-item nav-item-1"><a href="api_docs.html" accesskey="U">OGitM API Documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-ogitm.gitdb">
+<span id="api-docs-gitdb"></span><h1>API Docs: GitDB<a class="headerlink" href="#module-ogitm.gitdb" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="ogitm.gitdb.GitDB">
+<em class="property">class </em><code class="descclassname">ogitm.gitdb.</code><code class="descname">GitDB</code><span class="sig-paren">(</span><em>location</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#GitDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.GitDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>The raw database class.</p>
+<p>This class constructs a database instance in the location described.  This
+is automatically created under the covers by <code class="xref py py-class docutils literal"><span class="pre">ogitm.OGitM</span></code>, but
+it can also be created and used outside the confines of Object-Model
+mappings.  Total freedom!</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>location</strong> (<em>str</em>) &#8211; The path of the database.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="ogitm.gitdb.GitDB.drop">
+<code class="descname">drop</code><span class="sig-paren">(</span><em>table_name</em>, <em>force=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#GitDB.drop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.GitDB.drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Completely and irevocably destroy a table.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>table_name</strong> (<em>str</em>) &#8211; The name of the table to destroy</li>
+<li><strong>force</strong> (<em>bool</em>) &#8211; If true, no errors will be raised if the table does
+not exist.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises ValueError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body"><p class="first last">if the table is reserved, or could not be deleted
+for other reasons.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.GitDB.table">
+<code class="descname">table</code><span class="sig-paren">(</span><em>table_name</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#GitDB.table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.GitDB.table" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create a new table.</p>
+<p>This creates a new table in the current database.  You can also use
+the form <code class="docutils literal"><span class="pre">gitdb['table</span> <span class="pre">name']</span></code>, which delegates to this method.  If
+a table exists, this method will return a new instance of Table
+pointing to the same table.  (Note that two tables pointing to the same
+location will always return equal.)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>table_name</strong> (<em>str</em>) &#8211; The name this table will take.</td>
+</tr>
+<tr class="field-even field"><th class="field-name" colspan="2">Raises ValueError:</th></tr>
+<tr class="field-even field"><td>&nbsp;</td><td class="field-body">if the name is a reserved table name.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="ogitm.gitdb.Table">
+<em class="property">class </em><code class="descclassname">ogitm.gitdb.</code><code class="descname">Table</code><span class="sig-paren">(</span><em>name</em>, <em>location</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="ogitm.gitdb.Table.begin_transaction">
+<code class="descname">begin_transaction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.begin_transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.begin_transaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.commit">
+<code class="descname">commit</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.commit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.commit" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.find">
+<code class="descname">find</code><span class="sig-paren">(</span><em>where</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.find"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.find" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.find_ids">
+<code class="descname">find_ids</code><span class="sig-paren">(</span><em>where</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.find_ids"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.find_ids" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.find_items">
+<code class="descname">find_items</code><span class="sig-paren">(</span><em>where</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.find_items"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.find_items" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.find_one">
+<code class="descname">find_one</code><span class="sig-paren">(</span><em>where</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.find_one"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.find_one" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>doc_id</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.get"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.get" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.insert">
+<code class="descname">insert</code><span class="sig-paren">(</span><em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.insert"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.insert" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.rollback">
+<code class="descname">rollback</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.rollback"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.rollback" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.save">
+<code class="descname">save</code><span class="sig-paren">(</span><em>msg='-'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.save"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.save" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.transaction">
+<code class="descname">transaction</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.transaction"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.transaction" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="ogitm.gitdb.Table.transaction_open">
+<code class="descname">transaction_open</code><a class="headerlink" href="#ogitm.gitdb.Table.transaction_open" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="ogitm.gitdb.Table.update">
+<code class="descname">update</code><span class="sig-paren">(</span><em>d_id</em>, <em>document</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/ogitm/gitdb.html#Table.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#ogitm.gitdb.Table.update" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="fields.html"
+                        title="previous chapter">API Docs: Fields</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="search_functions.html"
+                        title="next chapter">API Docs: Search Functions</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/apidocs/gitdb.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2015, Jonathan Frere.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.2</a>
+      
+      |
+      <a href="../_sources/apidocs/gitdb.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
+  </body>
+</html>
