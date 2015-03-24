@@ -39,9 +39,9 @@ class BaseField(metaclass=abc.ABCMeta):
         self.coerce_func = kwargs.pop('coerce', lambda x: x)
 
         self.default = kwargs.pop('default', NULL_SENTINEL)
-        self.nullable = kwargs.pop('nullable', True)
-        self._accept_none = self.nullable or \
-            (self.default is not NULL_SENTINEL)
+        self._has_default = self.default is not NULL_SENTINEL
+        self.nullable = kwargs.pop('nullable', not self._has_default)
+        self._accept_none = self.nullable
 
         if len(kwargs) > 0:
             msg = "Unrecognised parameter(s) passed to field: {d}"
@@ -61,6 +61,15 @@ class BaseField(metaclass=abc.ABCMeta):
             field.
         """
         return True
+
+    def get_value(self, val):
+        if not self.check(val) and not self._has_default:
+            raise ValueError("Invalid value {d} with no default".format(d=val))
+
+        if self.check(val):
+            return val
+        else:
+            return self.default
 
     def coerce(self, val):
         """Attempt to coerce a value using the pre-defined function.

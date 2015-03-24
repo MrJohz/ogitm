@@ -16,7 +16,9 @@ def make_property(name, field):
     getter.__doc__ = "Getter for {name}".format(name=name)
 
     def setter(self, val):
-        if not field.check(val):
+        try:
+            val = field.get_value(val)
+        except ValueError:
             m = "Disallowed value {val} failed field checks"
             raise ValueError(m.format(val=val))
 
@@ -168,11 +170,13 @@ class Model(metaclass=MetaModel):
 
         for key, field in attrs.items():
             val = to_set.get(key, None)
-            if field.check(val):
-                setattr(self, key, val)
-            else:
+            try:
+                val = field.get_value(val)
+            except ValueError:
                 emsg = "Value {v} failed acceptance check for key {k}"
                 raise ValueError(emsg.format(k=key, v=val))
+            else:
+                setattr(self, key, val)
 
         if save:
             self.save()

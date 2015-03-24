@@ -22,6 +22,53 @@ class TestBaseField:
         assert sf.check(None)
         assert not sf.check(False)
 
+    def test_default(self):
+        sf = fields.String(default='Barry')
+        assert sf.get_value(None) == 'Barry'
+        assert sf.get_value('Not barry') == 'Not barry'
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value(4) == 'Barry'
+
+        sf = fields.String()  # No default
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value('Not barry') == 'Not barry'
+        assert sf.get_value(None) == None
+
+        with pytest.raises(ValueError):
+            sf.get_value(32)
+
+    def test_default_is_nullable(self):
+        sf = fields.String(default='Barry', nullable=True)
+        assert sf.get_value(None) == None
+        assert sf.get_value('Not barry') == 'Not barry'
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value(4) == 'Barry'
+
+        sf = fields.String(nullable=True)  # No default
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value('Not barry') == 'Not barry'
+        assert sf.get_value(None) == None
+
+        with pytest.raises(ValueError):
+            sf.get_value(32)
+
+    def test_default_not_nullable(self):
+        sf = fields.String(default='Barry', nullable=False)
+        assert sf.get_value(None) == 'Barry'
+        assert sf.get_value('Not barry') == 'Not barry'
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value(4) == 'Barry'
+
+        sf = fields.String(nullable=False)  # No default
+        assert sf.get_value('Barry') == 'Barry'
+        assert sf.get_value('Not barry') == 'Not barry'
+
+        with pytest.raises(ValueError):
+            sf.get_value(32)
+
+        with pytest.raises(ValueError):
+            sf.get_value(None)
+
 
 class TestStringField:
 
