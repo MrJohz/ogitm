@@ -114,6 +114,35 @@ class TestOGitM:
         with pytest.raises(ValueError):
             tm.name = 32
 
+    def test_default_data(self, simple_model):
+        db, _ = simple_model
+
+        class TestModel(ogitm.Model, db=db):
+
+            name = ogitm.fields.String(default="Bob")
+            age = ogitm.fields.Integer(default=14, nullable=False)
+            fav_col = ogitm.fields.Choice(('blue', 'red'),
+                                          default='red', nullable=True)
+
+        tm = TestModel(age=3)
+        assert tm.name == "Bob"
+        assert tm.age == 3
+        assert tm.fav_col is None
+
+        tm = TestModel(name=34, age=None, fav_col='green')
+        assert tm.name == "Bob"
+        assert tm.age == 14
+        assert tm.fav_col == "red"
+
+        tm.name = "Lucinda"
+        assert tm.name == "Lucinda"
+
+        tm.age = "hello"
+        assert tm.age == 14
+
+        tm.fav_col = "blue"
+        assert tm.fav_col == "blue"
+
     def test_data_insertion(self, simple_model):
         db, TestModel = simple_model
 
