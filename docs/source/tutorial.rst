@@ -15,7 +15,8 @@ Starting with OGitM is usually as simple as writing out the model declaration.
     ...
     ...     name = ogitm.fields.String()
     ...     age = ogitm.fields.Integer(min=0)
-    ...     hobby = ogitm.fields.Choice(["football", "karate", "knitting"])
+    ...     hobby = ogitm.fields.Choice(["football", "karate", "knitting"],
+    ...                                 default="karate")
 
 Note that the db parameter is mandatory - it specifies the place that the git
 repository will be stored.  Currently, this system uses bare repositories.
@@ -58,7 +59,8 @@ exactly as simple as it should be.
     True
 
 The limitations on the fields will also stop you doing anything stupid by
-raising errors all over the place.
+raising errors all over the place.  They'll also automatically insert default
+values.
 
 .. code-block:: python3
 
@@ -66,6 +68,10 @@ raising errors all over the place.
     Traceback (most recent call last):
         ...
     ValueError: ...
+
+    >>> roberta.hobby = "this is not a recognised hobby"
+    >>> print(roberta.hobby)  # defaults to "karate" as specified in model
+    karate
 
 More useful than just storing data is being able to retrieve it later.  The
 easiest way to do that is by searching for it.
@@ -86,7 +92,7 @@ together.
 
     >>> len(Person.find(age={'gt': 2}))  # Matches all current documents
     3
-    >>> len(Person.find(age={'gt': 2}).find(hobby={'startswith': "k"}))
+    >>> len(Person.find(age={'gt': 2}).find(hobby={'startswith': "kn"}))
     2
 
 
