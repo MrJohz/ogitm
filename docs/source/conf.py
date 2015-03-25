@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 if not "travis" in os.environ:  # this doesn't work for py3.2
     try:
         import sphinx.ext.napoleon
-    except ImportError:
+    except (ImportError, SyntaxError):
         napoleon_extension_name = 'sphinxcontrib.napoleon'
     else:
         napoleon_extension_name = 'sphinx.ext.napoleon'
@@ -300,16 +300,17 @@ texinfo_documents = [
 
 napoleon_use_rtype = False
 
-try:
-    from unittest.mock import MagicMock
-except ImportError:
-    from mock import Mock as MagicMock
+if os.environ.get('READTHEDOCS') == 'True':
+    try:
+        from unittest.mock import MagicMock
+    except ImportError:
+        from mock import Mock as MagicMock
 
-class Mock(MagicMock):
+    class Mock(MagicMock):
 
-    @classmethod
-    def __getattr__(cls, name):
-        return Mock()
+        @classmethod
+        def __getattr__(cls, name):
+            return Mock()
 
-MOCK_MODULES = ['pygit2']
-sys.modules.update((name, Mock()) for name in MOCK_MODULES)
+    MOCK_MODULES = ['pygit2']
+    sys.modules.update((name, Mock()) for name in MOCK_MODULES)
