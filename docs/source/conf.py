@@ -33,12 +33,13 @@ sys.path.insert(0, os.path.abspath('../../'))
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 
-try:
-    import sphinx.ext.napoleon
-except ImportError:
-    napoleon_extension_name = 'sphinxcontrib.napoleon'
-else:
-    napoleon_extension_name = 'sphinx.ext.napoleon'
+if not "travis" in os.environ:  # this doesn't work for py3.2
+    try:
+        import sphinx.ext.napoleon
+    except ImportError:
+        napoleon_extension_name = 'sphinxcontrib.napoleon'
+    else:
+        napoleon_extension_name = 'sphinx.ext.napoleon'
 
 extensions = [
     'sphinx.ext.autodoc',

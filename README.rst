@@ -3,10 +3,15 @@ OGitM
 
 **Because doing stupid things with git is surprisingly fun.**
 
-.. image:: https://img.shields.io/travis/MrJohz/ogitm.svg?style=flat-square
+
+.. image:: https://travis-ci.org/MrJohz/ogitm.svg?branch=master
     :target: https://travis-ci.org/MrJohz/ogitm
-.. image:: https://img.shields.io/coveralls/MrJohz/ogitm.svg?style=flat-square
-    :target: https://coveralls.io/r/MrJohz/ogitm
+.. image:: https://coveralls.io/repos/MrJohz/ogitm/badge.svg?branch=master
+    :target: https://coveralls.io/r/MrJohz/ogitm?branch=master
+.. image:: https://readthedocs.org/projects/ogitm/badge/?version=latest
+    :target: https://readthedocs.org/projects/ogitm/?badge=latest
+    :alt: Documentation Status
+
 
 OGitM is an ORM, but where the relational database that underlies the entire
 mapping has been replaced by an awful attempt at replicating a stupidly basic
