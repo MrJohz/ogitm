@@ -86,8 +86,7 @@ Todo
 ----
 
 - Documentation.  (docstrings & manual)
-- PyPI, documentation hosting
-- Individual tables (map models onto tables)
+- PyPI
 - Relationships? (U f*cking wot m8?)
 - Python 2
 - Better way of accessing git (May be needed for Py2, is needed for pypy, will

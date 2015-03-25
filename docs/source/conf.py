@@ -35,7 +35,7 @@ sys.path.insert(0, os.path.abspath('../../'))
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.coverage',
+    'sphinx.ext.napoleon',
     'sphinx.ext.viewcode',
 ]
 
@@ -288,6 +288,8 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 #texinfo_no_detailmenu = False
+
+napoleon_use_rtype = False
 
 try:
     from unittest.mock import MagicMock

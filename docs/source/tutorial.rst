@@ -70,6 +70,7 @@ values.
     ValueError: ...
 
     >>> roberta.hobby = "this is not a recognised hobby"
+    >>> # Note lack of error message here
     >>> print(roberta.hobby)  # defaults to "karate" as specified in model
     karate
 
@@ -92,7 +93,13 @@ together.
 
     >>> len(Person.find(age={'gt': 2}))  # Matches all current documents
     3
-    >>> len(Person.find(age={'gt': 2}).find(hobby={'startswith': "kn"}))
+    >>> len(Person.find(age={'gt': 2}, hobby={'startswith': 'kn'}))
+    2
+    >>> # same as
+    >>> len(Person.find(age={'gt': 2}).find(hobby={'startswith': 'kn'}))
+    2
+    >>> # complex queries may contain more than one operator at a time
+    >>> len(Person.find(age={'gt': 2, 'lt': 40}))
     2
 
 

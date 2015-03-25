@@ -71,7 +71,6 @@ values of ``a`` such that ``a > b``.
 
     >>> # Note that this also works for any
     >>> # other type with a total ordering
-
     >>> len(MyModel.find(name={'lt': 'Bf'}))
     2
     >>> # 'eq' will work for any two equivalent items
