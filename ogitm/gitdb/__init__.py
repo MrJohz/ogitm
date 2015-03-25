@@ -174,6 +174,19 @@ class Table:
             self._context_managed = False
             self.commit()
 
+    def revert_steps(self, steps, doc_id=None):
+        if doc_id is None:
+            self.data_tree.revert_steps(steps)
+        else:
+            doc_name = 'doc-{id}'.format(id=doc_id)
+            self.data_tree.revert_steps(steps, doc=doc_name)
+
+    def revert_to_state(self, state, doc_id=None):
+        self.data_tree.revert_to_state(state)
+
+    def save_state(self):
+        return self.data_tree.save_state()
+
     def insert(self, document):
         d_id = self._get_next_id()
         self.data_tree['doc-{id}'.format(id=d_id)] = document
@@ -276,4 +289,4 @@ class Table:
             func = SearchFunction.get(operator)
             inc_sets.append(func(key, operator, arg, index, query, al))
 
-        return reduce(lambda x, y: x | y, inc_sets)
+        return reduce(lambda x, y: x & y, inc_sets)

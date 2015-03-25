@@ -82,7 +82,7 @@ class TestStringField:
         sf = fields.String(coerce=str)
         assert sf.check("String input should still go through")
         assert sf.check(42), "So should integer input"
-        assert sf.check(True), "Eveen boolean input"
+        assert sf.check(True), "Even boolean input"
 
     def test_regex_str_input(self):
         sf = fields.String(regex=r'^start.*$')

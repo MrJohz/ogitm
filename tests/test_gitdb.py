@@ -30,7 +30,7 @@ class TestGitDB:
         assert gdb.find({'one': {'exists': True}}) == []
 
         with pytest.raises(ValueError):
-            gdb.update(312991, {'one': 'three'})
+            gdb.update(-1, {'one': 'three'})  # -1 shouldn't exist
 
     def test_multiple_inserts(self, gdb):
         doc1 = gdb.insert({'one': 'two'})
@@ -49,6 +49,16 @@ class TestGitDB:
         assert g1.get(doc2) == {'c': 'd'}
 
         assert doc1 != doc2
+
+    def test_closing_db_persistence(self, tmpdir):
+        g1 = self.gdb(tmpdir)
+
+        doc1 = g1.insert({'a': 'b'})
+        del g1
+
+        g2 = self.gdb(tmpdir)
+
+        assert g2.get(doc1) == {'a': 'b'}
 
     def test_transaction(self, tmpdir):
         g1 = self.gdb(tmpdir)
@@ -112,6 +122,20 @@ class TestGitDB:
             with pytest.raises(ValueError):
                 g1.rollback()
 
+    def test_transaction_with_update(self, gdb):
+        doc = gdb.insert({'test': 1})
+        with gdb.transaction():
+            gdb.update(doc, {'test': 2})
+
+        assert gdb.get(doc) == {'test': 2}
+
+        with pytest.raises(AssertionError):
+            with gdb.transaction():
+                gdb.update(doc, {'test': 3})
+                raise AssertionError("Thrown deliberately")
+
+        assert gdb.get(doc) == {'test': 2}
+
     def test_searching_simple(self, gdb):
         id_1 = gdb.insert({'square': True, 'circle': False})
         gdb.insert({'circle': True, 'square': False})
@@ -125,6 +149,14 @@ class TestGitDB:
                 in gdb.find({'circle': False}))
         assert len(gdb.find({'circle': False})) == 2
         assert gdb.find({'none': False}) == []
+
+    def test_searching_complex(self, gdb):
+        gdb.insert({'square': True, 'circle': False})
+        gdb.insert({'circle': False, 'square': False, 'triangle': True})
+
+        assert len(gdb.find({'square': {'exists': True}})) == 2
+        assert len(gdb.find({'square': {'exists': False}})) == 0
+        assert len(gdb.find({'square': {'exists': True, 'eq': False}})) == 1
 
     def test_searching_empty(self, gdb):
         assert gdb.find({'circle': True}) == []
@@ -187,6 +219,88 @@ class TestGitDB:
             gdb.drop('this table does not exist at all')
 
         gdb.drop('this table does not exist at all', force=True)
+
+    def test_revert_steps(self, gdb):
+        assert len(gdb.find({'test': {'exists': True}})) == 0
+        gdb.revert_steps(100)
+        assert len(gdb.find({'test': {'exists': True}})) == 0
+
+        gdb.insert({'test': 1})
+        gdb.insert({'test': 2})
+
+        gdb.revert_steps(0)
+        assert len(gdb.find({'test': {'exists': True}})) == 2
+
+        gdb.revert_steps(1)
+        assert len(gdb.find({'test': {'exists': True}})) == 1
+        assert gdb.find({'test': 2}) == []
+
+        gdb.revert_steps(1)
+        assert len(gdb.find({'test': {'exists': True}})) == 0
+
+    def test_revert_to_state(self, gdb):
+        empty_state = gdb.save_state()
+        gdb.insert({'test': 1})
+        state_one = gdb.save_state()
+        gdb.insert({'test': 2})
+        state_two = gdb.save_state()
+
+        gdb.revert_to_state(state_two)
+        assert len(gdb.find({'test': {'exists': True}})) == 2
+
+        gdb.revert_to_state(state_one)
+        assert len(gdb.find({'test': {'exists': True}})) == 1
+        assert gdb.find({'test': 2}) == []
+
+        gdb.revert_to_state(empty_state)
+        assert len(gdb.find({'test': {'exists': True}})) == 0
+
+        gdb.revert_to_state(state_two)
+        assert len(gdb.find({'test': {'exists': True}})) == 2
+
+    @pytest.mark.xfail
+    def test_revert_steps_document(self, gdb):
+        id_1 = gdb.insert({'test': 1})
+        id_2 = gdb.insert({'test': 2})
+
+        gdb.revert_steps(0, id_1)
+        assert len(gdb.find({'test': {'exists': True}})) == 2
+
+        gdb.revert_steps(1, id_1)
+        assert len(gdb.find({'test': {'exists': True}})) == 1
+        assert len(gdb.find({'test': 2})) == 1  # hasn't affected id_2
+        assert len(gdb.find({'test': 1})) == 0  # removed id_1
+
+        gdb.insert(id_1, {'test': 3})
+        gdb.update(id_1, {'test': 4})
+
+        gdb.update(id_2, {'test': 5})
+        gdb.update(id_2, {'test': 6})
+        gdb.update(id_2, {'test': 7})
+        gdb.update(id_2, {'test': 8})
+
+        gdb.update(id_1, {'test': 9})
+
+        gdb.revert_steps(1, id_1)
+        assert gdb.get(id_1) == {'test': 4}
+        assert gdb.get(id_2) == {'test': 8}
+
+        gdb.revert_steps(1, id_1)
+        assert gdb.get(id_1) == {'test': 3}
+        assert gdb.get(id_2) == {'test': 8}
+
+        gdb.revert_steps(3, id_2)
+        assert gdb.get(id_1) == {'test': 3}
+        assert gdb.get(id_2) == {'test': 5}
+
+        gdb.revert_steps(1, id_2)
+        assert gdb.get(id_1) == {'test': 3}
+        assert gdb.get(id_2) == {'test': 2}
+
+        gdb.revert_steps(1, id_2)  # un-create id_2
+        assert gdb.get(id_1) == {'test': 3}
+        with pytest.raises(ValueError):
+            gdb.get(id_2)
 
 
 class TestSearchFunctions:

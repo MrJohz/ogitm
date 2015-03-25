@@ -110,7 +110,7 @@ def comparison(key, op, arg, index, query, all):
             elif op in {'eq', '==', 'equal'}:
                 if svalue == arg:
                     resp.extend(index[value])
-            else:  # pragma: no cover
+            else:
                 assert False, "Unrecognised op for comparison function: " + op
 
         except (ValueError, TypeError):
