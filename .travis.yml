@@ -23,4 +23,4 @@ script:
   - "py.test tests ogitm README.rst docs/source/"
 
 after_success:
-  - coveralls
+  - coveralls --confilg_file=pytest.ini
