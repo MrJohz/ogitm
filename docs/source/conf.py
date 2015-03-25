@@ -32,10 +32,18 @@ sys.path.insert(0, os.path.abspath('../../'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
+
+try:
+    import sphinx.ext.napoleon
+except ImportError:
+    napoleon_extension_name = 'sphinxcontrib.napoleon'
+else:
+    napoleon_extension_name = 'sphinx.ext.napoleon'
+
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
-    'sphinx.ext.napoleon',
+    napoleon_extension_name,
     'sphinx.ext.viewcode',
 ]
 
