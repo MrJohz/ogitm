@@ -17,9 +17,7 @@ Contents:
    apidocs/api_docs
 
 
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`search`
