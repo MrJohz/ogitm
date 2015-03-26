@@ -6,8 +6,10 @@ OGitM
 
 .. image:: https://travis-ci.org/MrJohz/ogitm.svg?branch=master
     :target: https://travis-ci.org/MrJohz/ogitm
+    :alt: Build Status
 .. image:: https://coveralls.io/repos/MrJohz/ogitm/badge.svg?branch=master
     :target: https://coveralls.io/r/MrJohz/ogitm?branch=master
+    :alt: Coverage Status
 .. image:: https://readthedocs.org/projects/ogitm/badge/?version=latest
     :target: https://readthedocs.org/projects/ogitm/?badge=latest
     :alt: Documentation Status
