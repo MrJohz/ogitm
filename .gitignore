@@ -8,3 +8,5 @@ test_readme.py
 htmlcov
 docs/build
 *.egg-info
+build
+dist
