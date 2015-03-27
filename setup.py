@@ -7,8 +7,8 @@ from setuptools import setup
 LINE_MATCH = re.compile(r'''
     ^(?P<version> .+?) \s*  # version number
     \((?P<date> [\d]{4}-[\d]{2}-[\d]{2}|\?\?\?\?-\?\?-\?\?)\)  # date
-    \s* -- \s*  # formatting
-    (?P<details> .+)$  # Release details
+    (?:\s* -- \s*  # formatting
+    (?P<details> .+))?$  # Release details
     ''', re.VERBOSE)
 
 
@@ -45,10 +45,10 @@ def versions(path='CHANGELOG.txt'):
                     details.append('')
                 else:
                     break
-            version['changes'] = '\n'.join(details)
+            version['changes'] = '\n'.join(details).strip()
 
             if version['date'] == '????-??-??':
-                version['version'] += 'b' + str(len(details))
+                version['version'] += 'b' + str(version['changes'].count('\n'))
                 version['beta'] = True
 
             yield version
@@ -62,13 +62,14 @@ if change_info is None:
 
 version = change_info['version']
 print("Processing version: " + version)
+print(change_info)
 if change_info['beta']:
     print("NOTE!  THIS IS A BETA RELEASE!")
 
 setup(
     name='ogitm',
     version=version,
-    description='A OO-based Git Database',
+    description='An OO-based Git Database',
     long_description=open('README.rst').read(),
 
     url='https://github.com/MrJohz/ogitm',

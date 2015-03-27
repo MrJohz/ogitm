@@ -13,6 +13,9 @@ OGitM
 .. image:: https://readthedocs.org/projects/ogitm/badge/?version=latest
     :target: https://readthedocs.org/projects/ogitm/?badge=latest
     :alt: Documentation Status
+.. image:: https://badge.fury.io/py/ogitm.svg
+    :target: https://pypi.python.org/pypi/ogitm
+    :alt: PyPI Version
 
 
 OGitM is an ORM, but where the relational database that underlies the entire
