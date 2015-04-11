@@ -102,6 +102,25 @@ class TestStringField:
         assert not sf.check("3")
         assert not sf.check(22)
 
+    def test_length(self):
+        sf = fields.String(maxlen=20)
+
+        len2 = "2-"
+        assert len(len2) == 2
+        assert sf.check(len2)
+
+        len19 = "19-----------------"
+        assert len(len19) == 19
+        assert sf.check(len19)
+
+        len20 = "20------------------"
+        assert len(len20) == 20
+        assert sf.check(len20)
+
+        len21 = "21-------------------"
+        assert len(len21) == 21
+        assert not sf.check(len21)
+
 
 class TestNumberField:
 

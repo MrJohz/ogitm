@@ -138,3 +138,6 @@ class TreeWrapper:
                 break
         else:
             self._repo.reset(cmt.oid, pg2.GIT_RESET_SOFT)
+
+    def _revert_steps_doc(self, steps, doc):
+        pass

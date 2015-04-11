@@ -115,13 +115,16 @@ class BaseField(metaclass=abc.ABCMeta):
 class String(BaseField):
     """A field representing string types.
 
-    :param regex: Regular expression that this string must match.
-        If not present, any string will match.  Can be either a regular
-        expression object, or a string.
-    :type regex: string or regex
+    Parameters:
+        regex (str or regex): Regular expression that this string must match.
+            If not present, any string will match.  Can be either a regular
+            expression object, or a string.
+        maxlen (int): Maximum length of the string.  'None' (default) for no
+            length restrictions.
     """
 
     def __init__(self, **kwargs):
+        self.max_len = kwargs.pop('maxlen', None)
         regex = kwargs.pop('regex', None)
         super().__init__(**kwargs)
 
@@ -141,7 +144,12 @@ class String(BaseField):
             return False
 
         if self.regex is not None and val is not None:
-            return self.regex.search(val) is not None
+            if self.regex.search(val) is None:
+                return False
+
+        if self.max_len is not None and val is not None:
+            if self.max_len < len(val):
+                return False
 
         return True
 
